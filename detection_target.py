@@ -66,7 +66,7 @@ class Detection:
     # self.f = open(str(self.path) + "log.txt", "a")
   
     #--- Camera calibration path
-    calib_path  = "/home/housso97/Desktop/2023/random IMAV 2023/Test vol drone 14 juin/matrices_camera/"
+    calib_path  = ""
     self.camera_matrix = np.loadtxt(calib_path+'cameraMatrix.txt', delimiter=',')
     self.camera_distortion = np.loadtxt(calib_path+'cameraDistortion.txt', delimiter=',')
   
