@@ -12,14 +12,20 @@ Spécificités:
     Les photos prises durant un même appel de programme seront stockées dans un dossier qui sera crée en début de code
     Les précedents dossiers sont eux-mêmes contenus dans un dossier "photos" qui sera créé s'il n'existe pas au moment de l'appel du code
 """
+#Code permettant d'importer les classes "Drone" et "Detection"
+import os
+import sys
+package_path = os.getcwd()
+while package_path[-9:] != "IMAV_2023":
+    package_path = os.path.dirname(package_path)
+sys.path.insert(0, package_path)
 
 # Imports
 from time import sleep
 from datetime import datetime
 from commande_drone import Drone
 from detection_target import Detection
-import os
-import sys
+
 
 # Chemins absolu du dossier contenant les dossiers de photos
 path = os.path.dirname(os.getcwd()) + "/photos/"
