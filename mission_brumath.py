@@ -13,9 +13,8 @@ from commande_drone import Drone
 
 #Instanciation d'un objet "Drone" pour contrôler le drone 
 drone = Drone()
-# Attennde du mode auto
-while drone.get_mode() != "AUTO":
-    pass
+#Décollage
+drone.lancement_decollage(10)
 #Passage en mode "GUIDED"
 drone.set_mode("GUIDED")
 #Décolage
