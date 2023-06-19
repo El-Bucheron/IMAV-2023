@@ -14,24 +14,22 @@ import math
 import json
 
 from threading import Thread
-from pymavlink import mavutil, mavwp
 import threading
 
 from math import atan2, cos, radians, sin, sqrt, pi
 from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal
 from pymavlink import mavutil, mavwp
 from array import array
-from datetime import datetime
 from picamera import PiCamera,Color
 from picamera.array import PiRGBArray
+from datetime import datetime
 from utilities import get_distance_metres
 
 
-
 class Drone:
-
+    
+    # Constructeur de la classe se connectant au drone
     def __init__(self):
-        #--------------------- Connection ----------------------------
         print("Connecting...")
         self.vehicle = connect('/dev/ttyACM0', wait_ready=True, baud=57600, heartbeat_timeout=2)
         print("Connection OK")
@@ -67,8 +65,31 @@ class Drone:
                 print("Reached target altitude")
                 break
             time.sleep(1)
-
             
+         
+                
+    def passage_mode_Auto(self):
+        """
+        Permet d'initialiser le code pour lancer la mission en auto
+        """
+        print("[mission] Starting mission AUTO.")
+        # Reset mission set to first (0) waypoint
+        self.vehicle.commands.next=0
+
+        # Set mode to AUTO to start mission
+        self.vehicle.mode = VehicleMode("AUTO")
+           
+                       
+    #Fonction servant à faire décoller le drone après passage en mode "AUTO"
+    def lancement_decollage(self, altitudeDeVol):
+        #Initialisaion du programme en mode stabilize
+        self.vehicle.mode = VehicleMode("STABILIZE")
+        # Attente du mode auto
+        while self.get_mode() != "AUTO":
+            print("En attente du mode AUTO")
+            time.sleep(1)
+        #décollage
+        self.arm_and_takeoff(altitudeDeVol)            
             
             
     #set_mode - set the mode of the vehicle as long as we are in control
@@ -136,17 +157,6 @@ class Drone:
                 break  # Then break the waiting loop
             time.sleep(1)
 
-    
-    #Fonction servant à faire décoller le drone après passage en mode "AUTO"
-    def lancement_decollage(self, altitudeDeVol):
-        #Initialisaion du programme en mode stabilize
-        self.vehicle.mode = VehicleMode("STABILIZE")
-        # Attente du mode auto
-        while self.get_mode() != "AUTO":
-            print("En attente du mode AUTO")
-            time.sleep(1)
-        #décollage
-        self.arm_and_takeoff(altitudeDeVol)
 
             
             
@@ -267,17 +277,3 @@ class Drone:
         targetWaypointLocation = LocationGlobalRelative(lat,lon,alt)
         distancetopoint = get_distance_metres(self.vehicle.location.global_frame, targetWaypointLocation)
         return distancetopoint
-
-    
-    
-    
-    def passage_mode_Auto(self):
-        """
-        Permet d'initialiser le code pour lancer la mission en auto
-        """
-        print("[mission] Starting mission AUTO.")
-        # Reset mission set to first (0) waypoint
-        self.vehicle.commands.next=0
-
-        # Set mode to AUTO to start mission
-        self.vehicle.mode = VehicleMode("AUTO")
