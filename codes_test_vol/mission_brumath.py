@@ -22,10 +22,6 @@ from commande_drone import Drone
 drone = Drone()
 #Décollage
 drone.lancement_decollage(10)
-#Passage en mode "GUIDED"
-drone.set_mode("GUIDED")
-#Décolage
-drone.arm_and_takeoff(10)
 sleep(1)
 #Premier Waypoint
 point = LocationGlobalRelative(48.706580, 7.734317, 10)
