@@ -52,12 +52,13 @@ class Detection:
         self.marker_size = 5 #- [cm]
 
         #--- Camera calibration path
-        calib_path = os.getcwd()
-        while calib_path[-9:] != "IMAV_2023":
-            calib_path = os.path.dirname(calib_path)
-        sys.path.insert(0, calib_path)
-        self.camera_matrix = np.loadtxt(calib_path+'/cameraConfig/cameraMatrix.txt', delimiter=',')
-        self.camera_distortion = np.loadtxt(calib_path+'/cameraConfig/cameraDistortion.txt', delimiter=',')
+        package_path = os.getcwd()
+        while package_path[-9:] != "IMAV_2023":
+            package_path = os.path.dirname(package_path)
+        sys.path.insert(0, package_path)
+        calib_path = package_path + "/config/camera/"
+        self.camera_matrix = np.loadtxt(calib_path+'cameraMatrix.txt', delimiter=',')
+        self.camera_distortion = np.loadtxt(calib_path+'cameraDistortion.txt', delimiter=',')
 
         #--- Definir le dictionnaire aruco 
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
