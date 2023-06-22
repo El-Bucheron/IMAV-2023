@@ -37,7 +37,7 @@ local_packages_version_array = []
 #On sépare les noms et versions des packages locaux et les place dans le tableau adéquat
 for local_package in working_set:
     local_packages_name_array.append(local_package.key)
-    local_packages_name_version.append(local_package.version)
+    local_packages_version_array.append(local_package.version)
 
 
 #On traite tous
