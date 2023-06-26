@@ -59,6 +59,7 @@ class Detection:
         calib_path = package_path + "/config/camera/"
         self.camera_matrix = np.loadtxt(calib_path+'cameraMatrix.txt', delimiter=',')
         self.camera_distortion = np.loadtxt(calib_path+'cameraDistortion.txt', delimiter=',')
+        self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
 
         #--- Definir le dictionnaire aruco 
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
@@ -74,9 +75,8 @@ class Detection:
         photo = np.empty((self.vertical_res * self.horizotal_res * 3), dtype=np.uint8)
         self.camera.capture(photo, 'bgr')
         photo = photo.reshape((self.vertical_res, self.horizotal_res, 3))
-        matrice_camera_corrigee, ROI = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
-        photo_corrigee = cv2.undistort(photo, self.camera_matrix, self.camera_distortion, None, matrice_camera_corrigee)
-        photo_corrigee = photo_corrigee[ROI[1]:ROI[1]+ROI[3], ROI[0]:ROI[0]+ROI[2]]
+        photo_corrigee = cv2.undistort(photo, self.camera_matrix, self.camera_distortion, None, self.matrice_camera_corrigee)
+        photo_corrigee = photo_corrigee[self.ROI[1]:self.ROI[1]+self.ROI[3], self.ROI[0]:self.ROI[0]+self.ROI[2]]
         cv2.imwrite(chemin_photo, photo_corrigee)
 
 
@@ -372,10 +372,14 @@ class Detection:
                 if len(arucoCorner) != 0: # Si la longueur des côtés de l'aruco sont différents de zéro
                     corners = arucoCorner[0].reshape((4,2)) # on récupère les coins de l'aruco
                     print(corners) # on affiche les coordonnées des coins
-                    min_x = min(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) # on récupère la coordonnées du coin ayant la plus petite distance en abscisse
-                    max_x = max(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) # on récupère la coordonnées du coin ayant la plus grande distance en abscisse
-                    min_y = min(corners[0][1], corners[1][1], corners[2][1], corners[3][1])# on récupère la coordonnées du coin ayant la plus petite distance en ordonnée
-                    max_y = max(corners[0][1], corners[1][1], corners[2][1], corners[3][1])# on récupère la coordonnées du coin ayant la plus grande distance en ordonnée
+                    # on récupère la coordonnées du coin ayant la plus petite distance en abscisse
+                    min_x = min(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) 
+                    # on récupère la coordonnées du coin ayant la plus grande distance en abscisse
+                    max_x = max(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) 
+                    # on récupère la coordonnées du coin ayant la plus petite distance en ordonnée
+                    min_y = min(corners[0][1], corners[1][1], corners[2][1], corners[3][1])
+                    # on récupère la coordonnées du coin ayant la plus grande distance en ordonnée
+                    max_y = max(corners[0][1], corners[1][1], corners[2][1], corners[3][1])
                     
                     #on réalise le tracking du coin ayant la plus petite distance en abscisse et en ordonnée ainsi que ses côtés respectifs
                     self.tracker.init(image, [int(min_x),
