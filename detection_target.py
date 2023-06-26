@@ -16,7 +16,7 @@ from array import array
 from datetime import datetime
 from picamera import PiCamera,Color
 from picamera.array import PiRGBArray
-from utilities import get_distance_metres, get_GPS_location, get_distance_angle_picture
+from utilities import *
 import imutils
 from imutils.video import FPS
 
@@ -455,7 +455,8 @@ class Detection:
         if ids is not None : # and ids[0] == Detection.id_to_find:
             # Boolean update
             self.aruco_seen = True
-
+            
+            # Détermination du centre de l'aruco
             aruco_id = ids.flatten()[0]  # Select the first ArUco id from the list
             x_sum = corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0]
             y_sum = corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1]
@@ -465,9 +466,11 @@ class Detection:
             y_pixel_target_out = y_centerPixel_target
             arrete_marker_pxl = sqrt((corners[0][0][0][0]-corners[0][0][1][0])**2+(corners[0][0][0][1]-corners[0][0][1][1])**2)
 
+            # Traçage des contours de l'aruco
             cv2.line(frame, (x_centerPixel_target, y_centerPixel_target-20), (x_centerPixel_target, y_centerPixel_target+20), (0, 0, 255), 2)
             cv2.line(frame, (x_centerPixel_target-20, y_centerPixel_target), (x_centerPixel_target+20, y_centerPixel_target), (0, 0, 255), 2)
             cv2.putText(frame, str(aruco_id)+"a", (int(x_centerPixel_target), int(y_centerPixel_target)), font, 1, (0, 0, 0), 2)
+            
             # Estimating marker location from vision
             distance_vision, angle_vision = get_distance_angle_picture(self.x_imageCenter, self.y_imageCenter,
                                                                      x_centerPixel_target, y_centerPixel_target,

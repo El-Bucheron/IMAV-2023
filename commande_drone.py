@@ -35,7 +35,7 @@ class Drone:
         print("Connection OK")
 
 
-  
+    # Décollage du drone jusqu'à la distance fournie en argument
     def arm_and_takeoff(self, aTargetAltitude):
         """
         Arms vehicle and fly to aTargetAltitude.
@@ -97,6 +97,12 @@ class Drone:
         self.vehicle.mode = VehicleMode(mode)
         print("[mission] Mode set to %s." % mode)
         self.vehicle.flush()
+     
+    #set_mode - set the mode of the vehicle as long as we are in control    
+    def set_mode_avec_attente(self, mode):
+        self.set_mode(mode)
+        while self.get_mode() != mode:
+            pass       
 
         
         
@@ -126,7 +132,7 @@ class Drone:
           0, 0)  # yaw, yaw_rate (not used)
 
         # send command to vehicle
-        for x in range(0,duration) :
+        for x in range(0, duration) :
             self.vehicle.send_mavlink(msg)
             time.sleep(0.1)
 
