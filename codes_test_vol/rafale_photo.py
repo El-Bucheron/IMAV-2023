@@ -39,12 +39,17 @@ except FileExistsError:
 
 #On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 try:
-    nom_dossier = sys.argv[1]
+    nom_dossier = sys.argv[1] + "/"
 #Si l'utilisateur n'a pas fourni de nom de dossier, on utilse la date et l'heure d'appel du code pour le nommer    
 except IndexError:
     nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S") + "/"
+
 #Création du dossier
-os.mkdir(path + nom_dossier)
+try:
+    os.mkdir(path + nom_dossier)
+#Si le fichier existe déjà, on ne fait rien
+except FileExistsError:
+    pass
     
     
 # Instanciation d'un objet de type drone pour obtenir ses coordonnées GPS et d'un objet de type Detection pour prendre les photos   
