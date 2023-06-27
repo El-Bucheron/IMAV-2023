@@ -73,7 +73,7 @@ class Detection:
         self.camera.capture(photo, 'bgr')
         photo = photo.reshape((self.vertical_res, self.horizotal_res, 3))
         photo_corrigee = cv2.undistort(photo, self.camera_matrix, self.camera_distortion, None, self.matrice_camera_corrigee)
-        photo_corrigee = photo_corrigee[self.ROI[1]:self.ROI[1]+self.ROI[3], self.ROI[0]:self.ROI[0]+self.ROI[2]]
+        photo_corrigee = photo_corrigee[self.ROI[1]:self.ROI[1]+self.ROI[3], 20:449]
         cv2.imwrite(chemin_photo, photo_corrigee)
 
 
