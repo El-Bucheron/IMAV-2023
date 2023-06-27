@@ -10,11 +10,8 @@ import cv2
 import cv2.aruco as aruco
 import sys, time
 from math import sqrt
-from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal
-from pymavlink import mavutil
-from array import array
-from datetime import datetime
-from picamera import PiCamera,Color
+from dronekit import LocationGlobalRelative
+from picamera import PiCamera
 from picamera.array import PiRGBArray
 from utilities import *
 import imutils
@@ -94,36 +91,26 @@ class Detection:
 
         for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
             # Lecture de l'image depuis le flux
-            image = frame.array
-            
+            image = frame.array           
             # Redimensionnement de l'image
-            image = imutils.resize(image, width=600)
-            
+            image = imutils.resize(image, width=600)           
             # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)        
             # On définit la gamme de couleur de bleu que l'on souhaite
             lower_blue = np.array([105, 105, 25])
-            upper_blue = np.array([160, 255, 200])
-            
+            upper_blue = np.array([160, 255, 200])  
             # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
-            mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
-            
+            mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)            
             # Création d'un masque binaire inverse pour le reste de l'image
-            mask_white = cv2.bitwise_not(mask_blue)
-            
+            mask_white = cv2.bitwise_not(mask_blue)            
             # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
-            seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)
-            
+            seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)            
             # Création d'une image blanche de la même taille que l'image d'origine
-            white_img = np.ones_like(image, dtype=np.uint8) * 255
-            
+            white_img = np.ones_like(image, dtype=np.uint8) * 255            
             # Application du masque binaire inverse à l'image blanche pour avoir le reste en blanc
-            seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
-            
+            seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)            
             # Combinaison des deux images pour obtenir le résultat final
-            result = cv2.bitwise_or(seg_img_blue, seg_img_white)
-            
+            result = cv2.bitwise_or(seg_img_blue, seg_img_white)            
             # Recherche des contours des objets et affichage
             contours, hier = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -171,39 +158,28 @@ class Detection:
         for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
             # Lecture de l'image depuis le flux
             image = frame.array
-
             # Redimensionnement de l'image
-            image = imutils.resize(image, width=600)
-            
+            image = imutils.resize(image, width=600)            
             cv2.imshow('image_originale', image)
-
             # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
             # Définition de la gamme de couleur bleue souhaitée
             lower_blue = np.array([95, 105, 25])
             upper_blue = np.array([180, 255, 200])
-
             # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
             mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
-
             # Création d'un masque binaire inverse pour le reste de l'image
             mask_white = cv2.bitwise_not(mask_blue)
-
             # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
             seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)
-
             # Création d'une image blanche de la même taille que l'image d'origine
             white_img = np.ones_like(image, dtype=np.uint8) * 255
-
             # Application du masque binaire inverse à l'image blanche pour avoir le reste en blanc
             seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
-
             # Combinaison des deux images pour obtenir le résultat final
             result = cv2.bitwise_or(seg_img_blue, seg_img_white)
-
             # Recherche des contours des objets et affichage
-            contours, hier = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
             _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
@@ -213,14 +189,11 @@ class Detection:
 
             for contour in contours:
                 x, y, w, h = cv2.boundingRect(contour)
-
                 if w > 70 and h > 70:
                     if i == 0:
                         i = 1
                         continue
-
                     approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
-
                     cv2.drawContours(result, [contour], 0, (0, 0, 255), 3)
 
                     M = cv2.moments(contour)
@@ -246,188 +219,12 @@ class Detection:
 
         # Fermeture des fenêtres d'affichage
         cv2.destroyAllWindows()
-          
-          
-    
-    def Detection_aruco4(self): # sans tracking
-
-        # Délai pour que la caméra se stabilise
-        time.sleep(2)
-
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-            # Lecture de l'image depuis le flux
-            img = frame.array
-
-            # Redimensionnement de l'image
-            img = imutils.resize(img, width=600)
 
 
-            imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #Convertit l'image en nuance de gris
-        # On récupère les polygones détectés, les id et les code qui ne sont pas dans le dict
-            boxs, ids, rejected = aruco.detectMarkers(imgGray, self.aruco_dict, parameters=self.parameters)
-
-            
-            aruco.drawDetectedMarkers(img, boxs, borderColor=(0,255,0)) #affiche les aruco détectés et valides sur l'image
-            if not ids is None:
-                for box, di in zip(boxs, ids):
-                    # print(di)
-                    cv2.putText(img, str(di), (int(box[0][0][0]), int(box[0][0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-                        (255, 0, 255), 1)
-                                
-            cv2.imshow("Image", img)
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-
-            # Effacement du tampon de capture pour la prochaine image
-            self.rawCapture.truncate(0)
-
-
-        cv2.destroyAllWindows()
-          
-          
-      
-
-    def Detection_aruco3(self):  # amelioration Maya
-          
-        # Délai pour que la caméra se stabilise
-        time.sleep(2)
-
-
-        # Variables de suivi
-        tracking_initialized = False
-        bbox = None # La variable bbox est vide
-
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-            # Lecture de l'image depuis le flux
-            img = frame.array
-
-            # Redimensionnement de l'image
-            img = imutils.resize(img, width=600)
-
-            imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convertit l'image en nuance de gris
-            
-            # On récupère les polygones détectés, les id et les code qui ne sont pas dans le dict
-            boxs, ids, rejected = aruco.detectMarkers(imgGray, self.aruco_dict, parameters=self.parameters)
-
-            aruco.drawDetectedMarkers(img, boxs, borderColor=(0, 255, 0))  # Affiche les aruco détectés et valides sur l'image
-            if not ids is None:
-                for box, di in zip(boxs, ids):
-                    cv2.putText(img, str(di), (int(box[0][0][0]), int(box[0][0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-                                (255, 0, 255), 1)
-
-                    # Récupère les coins du carré vert entourant l'ArUco
-                    corners = np.float32(box[0]).reshape(-1, 2)
-
-                    if not tracking_initialized:
-                        # Initialise le tracker CSRT
-                        bbox = (np.min(corners[:,0]),np.min(corners[:,1]),np.max(corners[:,0])-np.min(corners[:,0]),np.max(corners[:,1])-np.min(corners[:,1]))
-                        self.tracker.init(img, bbox)
-                        tracking_initialized = True
-                    else:
-                        # Effectue le suivi avec le tracker CSRT
-                        success, bbox = self.tracker.update(img)
-
-                        if success:
-                            # Dessine le rectangle de suivi
-                            x, y, w, h = [int(v) for v in bbox]
-                            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-            cv2.imshow("Image", img)
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-
-            # Effacement du tampon de capture pour la prochaine image
-            self.rawCapture.truncate(0)
-
-
-        cv2.destroyAllWindows()
-        
-
-    def Detection_aruco2(self):   # amelioration Matthieu
-      
-        # Délai pour que la caméra se stabilise
-        time.sleep(2)
-
-        arucoRepere = None    # La variable aruco est vide
-        fps = None      # La variable fps est vide (nb d'images par secondes)
-
-
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):  # Boucle de capture d'images en continu à partir de la caméra
-            
-            # Lecture de l'image depuis le flux
-            image = frame.array
-
-            # Redimensionnement de l'image
-            image = imutils.resize(image, width=600)
-
-            #L'image est convertie en nuances de gris
-            frameGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
-            if arucoRepere is None: # Si la variable aruco est vide
-                arucoCorner,_,_ = aruco.detectMarkers(frameGray, self.aruco_dict, parameters=self.parameters) # On cherche un code aruco
-                if len(arucoCorner) != 0: # Si la longueur des côtés de l'aruco sont différents de zéro
-                    corners = arucoCorner[0].reshape((4,2)) # on récupère les coins de l'aruco
-                    print(corners) # on affiche les coordonnées des coins
-                    # on récupère la coordonnées du coin ayant la plus petite distance en abscisse
-                    min_x = min(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) 
-                    # on récupère la coordonnées du coin ayant la plus grande distance en abscisse
-                    max_x = max(corners[0][0], corners[1][0], corners[2][0], corners[3][0]) 
-                    # on récupère la coordonnées du coin ayant la plus petite distance en ordonnée
-                    min_y = min(corners[0][1], corners[1][1], corners[2][1], corners[3][1])
-                    # on récupère la coordonnées du coin ayant la plus grande distance en ordonnée
-                    max_y = max(corners[0][1], corners[1][1], corners[2][1], corners[3][1])
-                    
-                    #on réalise le tracking du coin ayant la plus petite distance en abscisse et en ordonnée ainsi que ses côtés respectifs
-                    self.tracker.init(image, [int(min_x),
-                                        int(min_y),
-                                        int(max_x-min_x),
-                                        int(max_y-min_y)])
-                    
-                    fps = FPS().start() # On démarre le compte des images par seconde
-                    arucoRepere = 1     # La variable aruco prend la valeur de 1
-            
-            # Si un aruco a été détecté :
-            if arucoRepere is not None:
-                (success, box) = self.tracker.update(image) # On effectue le suivi avec le tracker
-                if success:
-                    # On dessine le rectangle de suivi
-                    (x, y, w, h) = [int(v) for v in box] 
-                    cv2.rectangle(image, (x, y), (x + w, y + h),(0, 255, 0), 2)
-                    
-                fps.update() # mise a jour du compteur fps
-                fps.stop() # arrêt du compteur de fps
-                
-                # Affichage du fps moyen
-                info = [
-                    ("Success", "Yes" if success else "No"),
-                    ("FPS", "{:.2f}".format(fps.fps())), ]
-                for (i, (k, v)) in enumerate(info):
-                    text = "{}: {}".format(k, v)
-                    cv2.putText(image, text, (10, 480 - ((i * 20) + 20)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-            cv2.imshow("Frame", image) # On affiche l'image avec les modifications apportées
-            
-            # En appuyant sur la touche q, on sort de la boucle
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-            
-            # Effacement du tampon de capture pour la prochaine image
-            self.rawCapture.truncate(0)
-
-        # Fermeture de toutes les fenêtres
-        cv2.destroyAllWindows()
-          
-      
-      
   
 
-    def Detection_aruco(self, latitude, longitude, altitude, heading, saved_markers, id_to_test, research_whiteSquare):# Start time to measure image processing delay
+    def Detection_aruco(self, latitude, longitude, altitude, heading, saved_markers, id_to_test, research_whiteSquare):
+        # Start time to measure image processing delay
         start_time = time.time()
 
         # Boolean variables reset

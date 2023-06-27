@@ -17,6 +17,7 @@ sys.path.insert(0, package_path)
 # Imports
 from time import sleep
 from commande_drone import Drone
+from dronekit import LocationGlobalRelative
 
 #Instanciation d'un objet "Drone" pour contrôler le drone 
 drone = Drone()

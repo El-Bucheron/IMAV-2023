@@ -5,24 +5,9 @@ Created on 2022
 
 @author: Thomas Pavot
 """
-import os
-import numpy as np
-import cv2
-import cv2.aruco as aruco
-import sys, time
-import math
-import json
-
-from threading import Thread
-import threading
-
-from math import atan2, cos, radians, sin, sqrt, pi
-from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal
-from pymavlink import mavutil, mavwp
-from array import array
-from picamera import PiCamera,Color
-from picamera.array import PiRGBArray
-from datetime import datetime
+import time
+from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
+from pymavlink import mavutil
 from utilities import get_distance_metres
 
 
@@ -204,7 +189,7 @@ class Drone:
         Upload a mission from a file. 
         """
         #Read mission from file
-        missionlist = readmission(aFileName)
+        missionlist = self.readmission(aFileName)
 
         print("\nUpload mission from a file: %s" % aFileName)
         #Clear existing mission from vehicle

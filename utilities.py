@@ -5,7 +5,7 @@ Created on 2022
 @author: Thomas Pavot
 """
 from dronekit import LocationGlobalRelative
-from math import asin, atan2, cos, degrees, radians, sin, sqrt, pi
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 def get_distance_metres(aLocation1, aLocation2):
     """
