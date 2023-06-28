@@ -356,4 +356,14 @@ class Drone:
         
         
     def atterrissage_aruco(self):
-        print("")
+        altitude = self.vehicle.rangefinder.distance
+        while altitude > 0.25:
+            if altitude < 5:
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco_2023()
+                if centre_aruco_X != None:
+                    print("Aruco trouvé de coordonnées (en pixel): x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y))
+            elif altitude < 10:
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_carre_blanc()
+            self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
+            altitude = self.vehicle.rangefinder.distance
+        self.set_mode("LAND")

@@ -14,6 +14,9 @@ drone = Drone()
 
 while True:
     while drone.get_mode() != "GUIDED":
-        print("En attente du mode auto")
-        sleep(1)
+        print("En attente du mode GUIDED")
+        centre_aruco_x, centre_aruco_y = drone.camera.detection_aruco_2023()
+        if centre_aruco_x != None:
+            print("Aruco trouvé de coordonnées (en pixel): x = " + str(centre_aruco_x) + " ; y = " + str(centre_aruco_y))
+        sleep(1)    
     drone.atterrissage_aruco()
