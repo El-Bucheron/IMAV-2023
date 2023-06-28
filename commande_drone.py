@@ -6,20 +6,41 @@ Created on 2022
 @author: Thomas Pavot
 """
 import time
+from math import atan2, cos, sin, sqrt
 from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
 from pymavlink import mavutil
 from utilities import get_distance_metres
+from detection_target import Detection
 
 
 class Drone:
     
     # Constructeur de la classe se connectant au drone
-    def __init__(self):
-        print("Connecting...")
+    def __init__(self):     
+        
+        # Coefficients de l'asservissement PID
+        self.kpx = 0 # Coefficient de la correction proportionnelle mis à 0 car il sera initialisé plus tard
+        self.kpy = 0
+        self.kdx = 0.0001  # 0.00001 working "fine" for both
+        self.kdy = 0.0001
+        self.kix = 0.000001  # 0.0000001
+        self.kiy = 0.000001
+        
+        # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
+        self.erreurIntegraleX = 0
+        self.erreurIntegraleY = 0
+        self.erreurAnterieureX = 0
+        self.erreurAnterieureY = 0
+        
+        # Connexion au drone et initialisation de la caméra
+        print("Connexion au drone et initialisation de la caméra")
         self.vehicle = connect('/dev/ttyACM0', wait_ready=True, baud=57600, heartbeat_timeout=2)
-        print("Connection OK")
+        self.camera = Detection()
+        print("Connexion et initialisation terminée")
 
 
+
+        
     # Décollage du drone jusqu'à la distance fournie en argument
     def arm_and_takeoff(self, aTargetAltitude):
         """
@@ -52,7 +73,8 @@ class Drone:
             time.sleep(1)
             
          
-                
+
+        
     def passage_mode_Auto(self):
         """
         Permet d'initialiser le code pour lancer la mission en auto
@@ -64,7 +86,10 @@ class Drone:
         # Set mode to AUTO to start mission
         self.vehicle.mode = VehicleMode("AUTO")
            
-                       
+
+            
+            
+            
     #Fonction servant à faire décoller le drone après passage en mode "AUTO"
     def lancement_decollage(self, altitudeDeVol):
         #Initialisaion du programme en mode stabilize
@@ -74,7 +99,7 @@ class Drone:
             print("En attente du mode AUTO")
             time.sleep(1)
         #décollage
-        self.arm_and_takeoff(altitudeDeVol)            
+        self.arm_and_takeoff(altitudeDeVol)       
             
             
     #set_mode - set the mode of the vehicle as long as we are in control
@@ -82,16 +107,7 @@ class Drone:
         self.vehicle.mode = VehicleMode(mode)
         print("[mission] Mode set to %s." % mode)
         self.vehicle.flush()
-     
-    #set_mode - set the mode of the vehicle as long as we are in control    
-    def set_mode_avec_attente(self, mode):
-        self.set_mode(mode)
-        while self.get_mode() != mode:
-            pass       
-
-        
-        
-        
+            
     #get_mode - get current mode of vehicle 
     def get_mode(self):
         last_mode = self.vehicle.mode.name
@@ -268,3 +284,86 @@ class Drone:
         targetWaypointLocation = LocationGlobalRelative(lat,lon,alt)
         distancetopoint = get_distance_metres(self.vehicle.location.global_frame, targetWaypointLocation)
         return distancetopoint
+
+
+
+    # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
+    # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
+    def asservissement_atterrissage(self, aruco_center_x, aruco_center_y):
+
+        # Récupération de l'altitude du drone
+        altitudeAuSol = self.vehicle.rangefinder.distance        
+        # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
+        self.kpx = 0.003 if altitudeAuSol < 5 else 0.005
+        self.kpy = self.kpx
+
+        # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
+        erreurX = self.camera.x_imageCenter - aruco_center_x
+        erreurY = self.camera.y_imageCenter - aruco_center_y
+        # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
+        dist_center = sqrt(erreurX**2+erreurY**2)
+        dist_angle = atan2(erreurY, erreurX)
+        # Rotation de la base pour correspondre au repère du drone
+        alpha = dist_angle + self.vehicle.attitude.yaw
+        erreurX = dist_center * cos(alpha)
+        erreurY = dist_center * sin(alpha)
+        # Si l'erreur selon x et y est inférieure à 10 pixel, on la considère comme nulle
+        if abs(erreurX) <= 10:  
+            erreurX = 0
+        if abs(erreurY) <= 10:
+            erreurY = 0
+
+        # PD control
+        # Erreur dérivée 
+        self.erreurDeriveeX = (erreurX - self.erreurAnterieureX)
+        self.erreurDeriveeY = (erreurY - self.erreurAnterieureY)
+        # Erreur intégrale
+        self.erreurIntegraleX += erreurX
+        self.erreurIntegraleY += erreurY
+        # Stockage des erreurs en X et Y pour le future calcul de l'erreur dérivée 
+        self.erreurAnterieureX = erreurX
+        self.erreurAnterieureY = erreurY
+
+        # Calcul de la vitesse corrigée 
+        vx = self.kpx * erreurX + self.kdx * self.erreurDeriveeX + self.kix * self.erreurIntegraleX
+        vy = self.kpy * erreurY + self.kdy * self.erreurDeriveeY + self.kiy * self.erreurIntegraleY        
+        # Bornage des vitesses à +/- 5 m/s
+        vx = min(max(vx, -5.0), 5.0)
+        vy = min(max(vy, -5.0), 5.0)
+        vx = -vx # Inversion du sens de la vitesse pour correpondre au sens 
+        
+        # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
+        dist_center_threshold = 50 if altitudeAuSol < 2 else 1000        
+        # Si le drone n'est pas assez proche, il reste dans le même plan
+        if dist_center > dist_center_threshold :
+            vz = 0
+        # Si le drone est assez proche, on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
+        else:
+            #Choix de la vitesse verticale en fonction de l'altitude
+            if altitudeAuSol < 3 :
+                vz = 0.1  # a changer pour descendre
+            elif altitudeAuSol > 9 :
+                vz = 1  # a changer pour descendre
+            elif altitudeAuSol > 5:
+                vz = 0.5
+            else:
+                vz = 0.25
+        
+        #Envoie de la consigne de vitesse au drone
+        self.drone.set_velocity(vy, vx, vz, 1)
+
+        
+        
+        
+    def atterrissage_aruco(self):
+        altitude = self.vehicle.rangefinder.distance
+        while altitude > 0.25:
+            if altitude < 5:
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco_2023()
+                if centre_aruco_X != None:
+                    print("Aruco trouvé de coordonnées (en pixel): x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y))
+            elif altitude < 10:
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_carre_blanc()
+            self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
+            altitude = self.vehicle.rangefinder.distance
+        self.set_mode("LAND")
