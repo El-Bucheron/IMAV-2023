@@ -36,7 +36,7 @@ class Drone:
         print("Connexion au drone et initialisation de la caméra")
         self.vehicle = connect('/dev/ttyACM0', wait_ready=True, baud=57600, heartbeat_timeout=2)
         self.camera = Detection()
-        print("Connexion et initialisation terminée")
+        print("Connexion et initialisation terminées")
 
 
 
