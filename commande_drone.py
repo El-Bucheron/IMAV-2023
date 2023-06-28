@@ -18,14 +18,16 @@ class Drone:
     # Constructeur de la classe se connectant au drone
     def __init__(self):     
         
-        # Coefficients de l'asservissement PID
-        self.kpx = 0 # Coefficient de la correction proportionnelle mis à 0 car il sera initialisé plus tard
-        self.kpy = 0
-        self.kdx = 0.0001  # 0.00001 working "fine" for both
-        self.kdy = 0.0001
-        self.kix = 0.000001  # 0.0000001
-        self.kiy = 0.000001
+        # Coefficients de l'asservissement PID de l'atterrissage
+        self.kp_atterrissage = 0 # Coefficient de la correction proportionnelle mis à 0 car initialisé plus tard
+        self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
+        self.ki_atterrissage = 0.000001  # 0.0000001
         
+        # Coefficients de l'asservissement PID du suivi de véhicule
+        self.kp_suivi_vehicule = 0.005 
+        self.kd_suivi_vehicule = 0.0001  # 0.00001 working "fine" for both
+        self.ki_suivi_vehicule = 0.000001  # 0.0000001
+
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
         self.erreurIntegraleX = 0
         self.erreurIntegraleY = 0
@@ -38,6 +40,19 @@ class Drone:
         self.camera = Detection()
         print("Connexion et initialisation terminées")
 
+
+
+
+    #set_mode - set the mode of the vehicle as long as we are in control
+    def set_mode(self, mode):
+        self.vehicle.mode = VehicleMode(mode)
+        print("[mission] Mode set to %s." % mode)
+        self.vehicle.flush()
+            
+    #get_mode - get current mode of vehicle 
+    def get_mode(self):
+        return self.vehicle.mode.name
+    
 
 
 
@@ -73,18 +88,6 @@ class Drone:
             time.sleep(1)
                   
 
-
-    #set_mode - set the mode of the vehicle as long as we are in control
-    def set_mode(self, mode):
-        self.vehicle.mode = VehicleMode(mode)
-        print("[mission] Mode set to %s." % mode)
-        self.vehicle.flush()
-            
-    #get_mode - get current mode of vehicle 
-    def get_mode(self):
-        last_mode = self.vehicle.mode.name
-        return last_mode
-
     
     
     # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant une durée de 0.1 seconde  
@@ -107,9 +110,7 @@ class Drone:
         self.vehicle.send_mavlink(msg)
         time.sleep(0.1)
 
-            
-            
-            
+                       
     def goto(self, targetLocation, distanceAccuracy):
         """
         Function to move to a target location with a given precision.
@@ -139,13 +140,7 @@ class Drone:
 
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
-    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):
-
-        # Récupération de l'altitude du drone
-        altitudeAuSol = self.vehicle.rangefinder.distance        
-        # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        self.kpx = 0.003 if altitudeAuSol < 5 else 0.005
-        self.kpy = self.kpx
+    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):     
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -163,7 +158,7 @@ class Drone:
         if abs(erreurY) <= 10:
             erreurY = 0
 
-        # PD control
+        # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
         self.erreurDeriveeX = (erreurX - self.erreurAnterieureX)
         self.erreurDeriveeY = (erreurY - self.erreurAnterieureY)
@@ -175,15 +170,14 @@ class Drone:
         self.erreurAnterieureY = erreurY
 
         # Calcul de la vitesse corrigée 
-        vx = self.kpx * erreurX + self.kdx * self.erreurDeriveeX + self.kix * self.erreurIntegraleX
-        vy = self.kpy * erreurY + self.kdy * self.erreurDeriveeY + self.kiy * self.erreurIntegraleY        
-        # Bornage des vitesses à +/- 5 m/s
-        vx = min(max(vx, -5.0), 5.0)
-        vy = min(max(vy, -5.0), 5.0)
-        vx = -vx # Inversion du sens de la vitesse pour correpondre au sens 
+        vx = self.kp_suivi_vehicule * erreurX + self.kd_suivi_vehicule * self.erreurDeriveeX + self.ki_suivi_vehicule * self.erreurIntegraleX
+        vy = self.kp_suivi_vehicule * erreurY + self.kd_suivi_vehicule * self.erreurDeriveeY + self.ki_suivi_vehicule * self.erreurIntegraleY        
+        # Bornage des vitesses à +/- 15 m/s
+        vx = -min(max(vx, -15.0), 15.0)
+        vy = min(max(vy, -15.0), 15.0)
         
         #Envoie de la consigne de vitesse au drone
-        self.drone.set_velocity(vy, vx, 0)
+        self.drone.set_velocity(vy, vx, 0) # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
@@ -197,12 +191,12 @@ class Drone:
         # Récupération de l'altitude du drone
         altitudeAuSol = self.vehicle.rangefinder.distance        
         # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        self.kpx = 0.003 if altitudeAuSol < 5 else 0.005
-        self.kpy = self.kpx
+        self.kp_atterrissage = 0.003 if altitudeAuSol < 5 else 0.005
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
         erreurY = self.camera.y_imageCenter - aruco_center_y
+        print("Erreur en X = " + str(erreurX) + " ; Erreur en Y = " + str(erreurY))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -216,7 +210,7 @@ class Drone:
         if abs(erreurY) <= 10:
             erreurY = 0
 
-        # PD control
+        # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
         self.erreurDeriveeX = (erreurX - self.erreurAnterieureX)
         self.erreurDeriveeY = (erreurY - self.erreurAnterieureY)
@@ -228,12 +222,11 @@ class Drone:
         self.erreurAnterieureY = erreurY
 
         # Calcul de la vitesse corrigée 
-        vx = self.kpx * erreurX + self.kdx * self.erreurDeriveeX + self.kix * self.erreurIntegraleX
-        vy = self.kpy * erreurY + self.kdy * self.erreurDeriveeY + self.kiy * self.erreurIntegraleY        
+        vx = self.kp_atterrissage * erreurX + self.kd_atterrissage * self.erreurDeriveeX + self.ki_atterrissage * self.erreurIntegraleX
+        vy = self.kp_atterrissage * erreurY + self.kd_atterrissage * self.erreurDeriveeY + self.ki_atterrissage * self.erreurIntegraleY        
         # Bornage des vitesses à +/- 5 m/s
-        vx = min(max(vx, -5.0), 5.0)
+        vx = -min(max(vx, -5.0), 5.0)
         vy = min(max(vy, -5.0), 5.0)
-        vx = -vx # Inversion du sens de la vitesse pour correpondre au sens 
         
         # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
         dist_center_threshold = 50 if altitudeAuSol < 2 else 1000        
@@ -253,7 +246,8 @@ class Drone:
                 vz = 0.25
         
         #Envoie de la consigne de vitesse au drone
-        self.drone.set_velocity(vy, vx, vz)
+        print("Consigne en vitesse : VX = " + vx + " ; VY = " + vy + " ; VZ = " + vz )
+        self.drone.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
 
         
         
