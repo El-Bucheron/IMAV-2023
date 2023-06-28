@@ -140,7 +140,18 @@ class Drone:
 
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
-    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):     
+    def asservissement_suivi_vehicule(self):
+
+        # Récupération du centre l'aruco
+        aruco_center_x, aruco_center_y = self.camera.detection_aruco_2023()
+        # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
+        if aruco_center_x == None:
+            print("Aruco non détecté")
+            return
+        
+        # Si l'aruco a été détecté, on affiche ses coordonnées et on continue l'asservissement
+        print("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) 
+
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -187,6 +198,11 @@ class Drone:
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
     def asservissement_atterrissage(self, aruco_center_x, aruco_center_y):
+
+        # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
+        if aruco_center_x == None:
+            print("Aruco non détecté")
+            return
 
         # Récupération de l'altitude du drone
         altitudeAuSol = self.vehicle.rangefinder.distance        

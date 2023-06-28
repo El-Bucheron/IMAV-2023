@@ -242,6 +242,7 @@ class Detection:
             x_centerPixel_target = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
             y_centerPixel_target = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
             return x_centerPixel_target, y_centerPixel_target
+        # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
             return None, None
 
@@ -280,7 +281,6 @@ class Detection:
                     y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
 
         return x_centerPixel_target, y_centerPixel_target
-
 
 
 
