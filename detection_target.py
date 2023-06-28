@@ -37,7 +37,7 @@ class Detection:
         self.good_aruco_found = False
         self.white_square_seen = False
 
-        #--------------- Camera parametres --------------------
+        # Intialisation de la picamera
         self.camera = PiCamera()
         self.camera.resolution = (self.horizotal_res, self.vertical_res)
         self.camera.framerate = 30
@@ -47,17 +47,19 @@ class Detection:
         self.id_to_find = id_to_find
         self.marker_size = 5 #- [cm]
 
-        #--- Camera calibration path
-        package_path = os.getcwd()
-        while package_path[-9:] != "IMAV_2023":
-            package_path = os.path.dirname(package_path)
-        sys.path.insert(0, package_path)
-        calib_path = package_path + "/config/camera/"
-        self.camera_matrix = np.loadtxt(calib_path+'cameraMatrix.txt', delimiter=',')
-        self.camera_distortion = np.loadtxt(calib_path+'cameraDistortion.txt', delimiter=',')
+        # Récupération du chemin d'accès global
+        self.package_path = os.getcwd()
+        while self.package_path[-9:] != "IMAV_2023":
+            self.package_path = os.path.dirname(self.package_path)
+        sys.path.insert(0, self.package_path)
+
+        # Camera calibration path
+        calib_camera_path = self.package_path + "/config/camera/"
+        self.camera_matrix = np.loadtxt(calib_camera_path+'cameraMatrix.txt', delimiter=',')
+        self.camera_distortion = np.loadtxt(calib_camera_path+'cameraDistortion.txt', delimiter=',')
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
 
-        #--- Definir le dictionnaire aruco 
+        # Definir le dictionnaire aruco 
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
         self.closeToAruco = False
@@ -245,7 +247,7 @@ class Detection:
 
 
 
-
+    # Non opérationnel
     def detection_carre_blanc(self, altitude):
         # Capture et traitement de l'image prise par la picaméra
         self.camera.capture(self.rawCapture, format="bgr")
