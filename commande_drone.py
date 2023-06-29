@@ -46,7 +46,6 @@ class Drone:
     #set_mode - set the mode of the vehicle as long as we are in control
     def set_mode(self, mode):
         self.vehicle.mode = VehicleMode(mode)
-        print("[mission] Mode set to %s." % mode)
         self.vehicle.flush()
             
     #get_mode - get current mode of vehicle 
@@ -90,11 +89,8 @@ class Drone:
 
     
     
-    # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant une durée de 0.1 seconde  
-    def set_velocity(self, velocity_x, velocity_y, velocity_z, duration):
-        # only let commands through at 10hz
-        print("[mission] Velocity set to values: vx: %.2f ; vy: %.2f ; vz %.2f." % (velocity_x, velocity_y, velocity_z))
-
+    # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant 0.1 seconde 
+    def set_velocity(self, velocity_x, velocity_y, velocity_z):
         # create the SET_POSITION_TARGET_LOCAL_NED command
         msg = self.vehicle.message_factory.set_position_target_local_ned_encode(
           0,  # time_boot_ms (not used)
@@ -106,8 +102,9 @@ class Drone:
           # x, y, z velocity in m/s -- X positive forward or North/ Y positive right or East / Z positive down
           0, 0, 0,  # x, y, z acceleration (not used)
           0, 0)  # yaw, yaw_rate (not used)
-
+        # Envoie de la consigne de vitesse au drone 
         self.vehicle.send_mavlink(msg)
+        # Temporisation de 0.1 seconde
         time.sleep(0.1)
 
                        
@@ -271,18 +268,14 @@ class Drone:
         altitude = self.vehicle.rangefinder.distance
         # Tant que le drone n'est pas à 25 cm du sol, on lance l'asservissement du drone
         while altitude > 0.5:
-            # Si le robot est à plus de 10 mètres (5 pour le test) du sol on le fait descendre
-            if altitude > 5:
+            # Si le robot est à plus de 10 mètres du sol on le fait descendre
+            if altitude > 10:
                 print("Descente du drone")
-                self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
-
-            
+                self.set_velocity(0, 0, 1) #sens z positif -> vers le sol            
             # Si le robot est entre 5 et 10 mètres du sol on cherche l'aruco par détection de carré blanc
             # On récupère ensuite le centre de l'aruco détecté selon X et Y (en pixel)
-            #elif altitude > 5:
-                #centre_aruco_X, centre_aruco_Y = self.camera.detection_carre_blanc()
-            
-
+            elif altitude > 5:
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_carre_blanc()
             # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre
             else:
                 centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco()

@@ -17,7 +17,7 @@ import imutils
 from imutils.video import FPS
 
 class Detection:
-    def __init__(self, id_to_find=57):
+    def __init__(self):
 
         #--------------- Resolution ---------------------------
         # Focal length and sensors dimensions for Pi camera
@@ -32,20 +32,11 @@ class Detection:
         self.x_imageCenter = int(self.horizotal_res/2)
         self.y_imageCenter = int(self.vertical_res/2)  
 
-        #--------------- Boolean variables --------------------
-        self.aruco_seen = False
-        self.good_aruco_found = False
-        self.white_square_seen = False
-
         # Intialisation de la picamera
         self.camera = PiCamera()
         self.camera.resolution = (self.horizotal_res, self.vertical_res)
         self.camera.framerate = 30
         self.rawCapture = PiRGBArray(self.camera, size=(self.horizotal_res, self.vertical_res))
-
-        #--------------- ArUco parametres --------------------
-        self.id_to_find = id_to_find
-        self.marker_size = 5 #- [cm]
 
         # Récupération du chemin d'accès global
         self.package_path = os.getcwd()
@@ -62,10 +53,6 @@ class Detection:
         # Definir le dictionnaire aruco 
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
-        self.closeToAruco = False
-
-        # Initialsiation du tracker
-        self.tracker = cv2.TrackerCSRT_create()
 
     
     # Fonction permettant de prendre une photo avec la camera
