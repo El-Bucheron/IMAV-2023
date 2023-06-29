@@ -54,7 +54,9 @@ class Detection:
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
 
-    
+
+
+
     # Fonction permettant de prendre une photo avec la camera
     # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
     def prise_photo(self, chemin_photo=""):
@@ -223,11 +225,12 @@ class Detection:
         # Recherche d'aruco dans l'image prise
         corners, _, _ = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters,
                                   cameraMatrix=self.camera_matrix, distCoeff=self.camera_distortion)
-        # Si un aruco est détecté, on calcule sont centre et on le retourne
-        if corners is not None :            
+        # Si la longueur du tuple "corners", n'est pas de vide, i.e. si au moins un aruco est détecté
+        if len(corners) != 0 :            
             # On calcule la moyenne en x et y des arrêtes de l'aruco
             x_centerPixel_target = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
             y_centerPixel_target = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
+            # On renoive les coordronnées calculées
             return x_centerPixel_target, y_centerPixel_target
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
@@ -249,7 +252,7 @@ class Detection:
         blur = cv2.GaussianBlur(frame,(5,5),0)       # Gaussian blur filter  
         hls = cv2.cvtColor(blur, cv2.COLOR_BGR2HLS)  # Convert from BGR to HLS color space  
         # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
-        lower_bound = (0,230,0)
+        lower_bound = (0,150,0)
         upper_bound = (255,255,255)
         # Création du masque
         mask_hls = cv2.inRange(hls, lower_bound, upper_bound)
