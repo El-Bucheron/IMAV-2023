@@ -227,7 +227,7 @@ class Detection:
 
     # Fonction servant trouver les arucos vus par la caméra et renvoyant les coordonnées de son centre
     # Si aucun n'aruco n'est détecté, on renvoie des variables vides      
-    def detection_aruco_2023(self):
+    def detection_aruco(self):
         # Capture et traitement de l'image prise par la picaméra
         self.camera.capture(self.rawCapture, format="bgr")
         frame = self.rawCapture.array
@@ -248,7 +248,11 @@ class Detection:
 
 
 
-    # Non opérationnel
+
+
+    # Fonction servant à détecter l'aruco quand l'altitude est trop élevée pour qu'on le détecte directement avec la fonction "detection_aruco"
+    # Pour cela, on assume que l'aruco vu du ciel, après quelques corrections d'images, est un carré blanc
+    # La fonction renvoie les coordonnées du carré blanc si elle en trouve un ou des variables vides sinon
     def detection_carre_blanc(self, altitude):
         # Capture et traitement de l'image prise par la picaméra
         self.camera.capture(self.rawCapture, format="bgr")
@@ -260,184 +264,35 @@ class Detection:
         # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
         lower_bound = (0,230,0)
         upper_bound = (255,255,255)
+        # Création du masque
         mask_hls = cv2.inRange(hls, lower_bound, upper_bound)
-        # Closing detected elements
+        # Matrice de strucutre
         closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
+        # masque permettant de remplir le centre d'un contour avec une unique couleur
         mask_closing = cv2.morphologyEx(mask_hls, cv2.MORPH_CLOSE, closing_kernel)
+        # Détection des contours
         contours, _ = cv2.findContours(mask_closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        #--------------White square corners ---------------------------
+        # On regarde parmis les contours s'il n'y a pas un carré blanc
         for c in contours:
-            # pour identifier un carre
+            # ?
             peri = cv2.arcLength(c, True)
+            # Récupération des segments composant le contour
             approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+            # Récupération de l'aire du contour
             area = cv2.contourArea(c)
-            
+            # Si le contour possède 4 côtés, et est 
             if 10000*altitude**-2 < area < 60000*altitude**-2 and len(approx) == 4:
+                # Récupération de la longueur et largeur du contour
                 (_, _, w, h) = cv2.boundingRect(approx)
-                ar = w / float(h)
-                if ar >= 0.90 and ar <= 1.10:  # Square filter
+                # Si le rapport longueur/largeur est compris entre 0.9 et 1.1, i.e. qu'il s'agit d'un carré
+                if 0.9 <= (w / float(h)) <= 1.10:
+                    # Calcule du centre du carré avec la moyenne des coordonnées en X et Y
                     x_centerPixel_target = int(np.mean(c, axis=0)[0][0])
                     y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
-
-        return x_centerPixel_target, y_centerPixel_target
-
-
-
-
-    def Detection_aruco(self, latitude, longitude, altitude, heading, saved_markers, id_to_test, research_whiteSquare):
-        # Start time to measure image processing delay
-        start_time = time.time()
-
-        # Boolean variables reset
-        self.aruco_seen = False
-        self.good_aruco_found = False
-        self.white_square_seen = False
-        print("Id to test input detection: %s" % id_to_test)
-        x_pixel_target_out = None
-        y_pixel_target_out = None
-        name = "Text"
-        new_location_found = False
-
-        #--- Capturer le videocamera 
-        self.camera.capture(self.rawCapture, format="bgr")
-        frame = self.rawCapture.array
-        self.rawCapture.truncate(0)
-            
-        font = cv2.FONT_HERSHEY_PLAIN  # Text font for frame annotation
-
-        self.img_compteur+=1
-
-        ########################## traitement pour aruco
-        gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #-- remember, OpenCV stores color images in Blue, Green, Red
-
-        #-- Trouver tous les marquers dans l'image
-        corners, ids, rejected = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters,
-                                  cameraMatrix=self.camera_matrix, distCoeff=self.camera_distortion)
-
-        #--------------- Detection ArUco Tags ---------------------------
-        if ids is not None : # and ids[0] == Detection.id_to_find:
-            # Boolean update
-            self.aruco_seen = True
-            
-            # Détermination du centre de l'aruco
-            aruco_id = ids.flatten()[0]  # Select the first ArUco id from the list
-            x_sum = corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0]
-            y_sum = corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1]
-            x_centerPixel_target = int(x_sum*.25)
-            y_centerPixel_target = int(y_sum*.25)
-            x_pixel_target_out = x_centerPixel_target
-            y_pixel_target_out = y_centerPixel_target
-
-            # Traçage des contours de l'aruco
-            cv2.line(frame, (x_centerPixel_target, y_centerPixel_target-20), (x_centerPixel_target, y_centerPixel_target+20), (0, 0, 255), 2)
-            cv2.line(frame, (x_centerPixel_target-20, y_centerPixel_target), (x_centerPixel_target+20, y_centerPixel_target), (0, 0, 255), 2)
-            cv2.putText(frame, str(aruco_id)+"a", (int(x_centerPixel_target), int(y_centerPixel_target)), font, 1, (0, 0, 0), 2)
-            
-            # Estimating marker location from vision
-            distance_vision, angle_vision = get_distance_angle_picture(self.x_imageCenter, self.y_imageCenter,
-                                                                     x_centerPixel_target, y_centerPixel_target,
-                                                                     altitude, self.dist_coeff_x, self.dist_coeff_y)
-            current_location = LocationGlobalRelative(latitude, longitude, 0)
-            estimated_location = get_GPS_location(current_location, heading + angle_vision, distance_vision)
-
-            # If the white square of interest is located at the ArUco place
-            saved_markers[aruco_id] = (estimated_location, True)  # Save Aruco id and its location
-
-            if aruco_id == self.id_to_find:
-                self.good_aruco_found = True
-            
-        #--------------- Detection White Squares ------------------------
-        elif research_whiteSquare == True:      
-            #------------- Image processing for white squares -------------
-            blur = cv2.GaussianBlur(frame,(5,5),0)       # Gaussian blur filter  
-            hls = cv2.cvtColor(blur, cv2.COLOR_BGR2HLS)  # Convert from BGR to HLS color space  
-            lower_bound = (0,230,0)     # Select white color in HLS space
-            upper_bound = (255,255,255)
-            mask_hls = cv2.inRange(hls, lower_bound, upper_bound)
-            name = "Test_1_Img_" + str(self.img_compteur) + "_lat_" + str(latitude)+ "lon_" + str(longitude) + "alt_" + str(altitude) + "head_" + str(heading)
-            cv2.imwrite(os.path.join(self.path, "hls_"+name +".png"), mask_hls)
-            # Closing detected elements
-            closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
-            mask_closing = cv2.morphologyEx(mask_hls, cv2.MORPH_CLOSE, closing_kernel)
-            contours, _ = cv2.findContours(mask_closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-            #--------------White square corners ---------------------------
-            for c in contours:
-                # pour identifier un carre
-                peri = cv2.arcLength(c, True)
-                approx = cv2.approxPolyDP(c, 0.04 * peri, True)
-                area = cv2.contourArea(c)
-                
-                if area < 60000*altitude**-2  and area > 10000*altitude**-2 and len(approx) == 4 and altitude > 3:
-                    (x, y, w, h) = cv2.boundingRect(approx)
-                    ar = w / float(h)
-                    if ar >= 0.90 and ar <= 1.10:  # Square filter
-                        x_centerPixel_target = int(np.mean(c, axis=0)[0][0])
-                        y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
-        
-                        pixelTest = mask_closing[y_centerPixel_target,x_centerPixel_target]
-                        if pixelTest == 255 :  #verifie couleur du carre detecte 255 c est blanc
-                            # Boolean and counter update
-                            self.white_square_seen = True
-                            cv2.line(frame, (x_centerPixel_target, y_centerPixel_target-20), (x_centerPixel_target, y_centerPixel_target+20), (0, 0, 255), 2)
-                            cv2.line(frame, (x_centerPixel_target-20, y_centerPixel_target), (x_centerPixel_target+20, y_centerPixel_target), (0, 0, 255), 2)
-
-                            # Estimating marker location from vision
-                            distance_vision, angle_vision = get_distance_angle_picture(self.x_imageCenter, self.y_imageCenter,
-                                                                                     x_centerPixel_target, y_centerPixel_target,
-                                                                                     altitude, self.dist_coeff_x, self.dist_coeff_y)
-                            current_location = LocationGlobalRelative(latitude, longitude, 0)
-                            estimated_location = get_GPS_location(current_location, heading + angle_vision, distance_vision)
-
-                            # White square found and compared to dictionary
-                            new_location_found = True
-                            white_square_id = 0
-                            for id_markers in saved_markers:
-                                saved_location = saved_markers[id_markers][0]
-                                distance_meters = get_distance_metres(estimated_location, saved_location)
-
-                                # White square already checked with location fusion
-                                if distance_meters < 10:
-                                    new_location_found = False
-                                    white_square_id = id_markers
-                                    if white_square_id == id_to_test:
-                                        x_pixel_target_out = x_centerPixel_target
-                                        y_pixel_target_out = y_centerPixel_target
-
-
-                            # Storing new white squares in dictionary
-                            if new_location_found:
-                                if max(saved_markers.keys()) <= 1000:
-                                    white_square_id = 1001        # First white square with id 1001
-                                else:
-                                    max_id = max(saved_markers.keys())
-                                    white_square_id = max_id + 1  # Others white square with growing ids
-                                print("[visiont] New location found with id %s." % white_square_id)
-                                saved_markers[white_square_id] = (estimated_location, False)
-
-                            if white_square_id > 1000:
-                                cv2.putText(frame, str(white_square_id), (x_centerPixel_target, y_centerPixel_target), font, 1, (0, 0, 0), 2)
-                            else:
-                                self.white_square_seen = False
-                                cv2.putText(frame, str(white_square_id)+"b", (x_centerPixel_target, y_centerPixel_target), font, 1, (0, 0, 0), 2)
-
-        if self.aruco_seen == False and self.white_square_seen == False:
-            x_pixel_target_out = None
-            y_pixel_target_out = None
-            name = "Test_1_Img_" + str(self.img_compteur) + "_no_lat_" + str(latitude)+ "lon_" + str(longitude) + "alt_" + str(altitude) + "head_" + str(heading)
-        else:
-            name = "Test_1_Img_" + str(self.img_compteur) + "_yes_lat_" + str(latitude)+ "lon_" + str(longitude) + "alt_" + str(altitude) + "head_" + str(heading)
-        
-        # Ajout sur l'image d'un "viseur"
-        cv2.circle(frame, (320, 240), 75, (255,255,255), 1)
-        cv2.line(frame, (self.x_imageCenter, self.y_imageCenter-20), (self.x_imageCenter, self.y_imageCenter+20), (255, 0, 0), 2)
-        cv2.line(frame, (self.x_imageCenter-20, self.y_imageCenter), (self.x_imageCenter+20, self.y_imageCenter), (255, 0, 0), 2)
-
-        # End time to measure image processing delay
-        delay = time.time() - start_time
-        cv2.imwrite(os.path.join(self.path, name + "delay_" + str(delay) + ".png"), frame)
-        print("Image saved (%s)!" % self.img_compteur)
-
-        return x_pixel_target_out, y_pixel_target_out, self.aruco_seen, self.good_aruco_found, self.white_square_seen, saved_markers
-
+                    # Si le pixel central est blanc, i.e. que le carré est blanc
+                    if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
+                        # On renvoie les coordonnées du centre du carré
+                        return x_centerPixel_target, y_centerPixel_target
+        # Si aucun carré blanc n'a été détecté, on renvoie des variables vides
+        return None, None

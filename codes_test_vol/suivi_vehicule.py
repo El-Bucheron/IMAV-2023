@@ -29,7 +29,7 @@ while drone.get_mode() != "GUIDED":
     # On affiche l'altitude de vol
     print("Altitude = " + str(drone.vehicle.rangefinder.distance))
     # On essaye de détecter un aruco
-    X,Y = drone.camera.detection_aruco_2023()
+    X,Y = drone.camera.detection_aruco()
     # Si un aruco est détecté, on affiche les coordonnées renvoyées
     if X != None:
         print("Coordonnées trouvées : x = " + str(X) + " ; y = " + str(Y))

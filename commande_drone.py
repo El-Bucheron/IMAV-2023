@@ -143,7 +143,7 @@ class Drone:
     def asservissement_suivi_vehicule(self):
 
         # Récupération du centre l'aruco
-        aruco_center_x, aruco_center_y = self.camera.detection_aruco_2023()
+        aruco_center_x, aruco_center_y = self.camera.detection_aruco()
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
             print("Aruco non détecté")
@@ -151,8 +151,6 @@ class Drone:
         
         # Si l'aruco a été détecté, on affiche ses coordonnées et on continue l'asservissement
         print("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) 
-
-
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
         erreurY = self.camera.y_imageCenter - aruco_center_y
@@ -272,7 +270,7 @@ class Drone:
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
         # Tant que le drone n'est pas à 25 cm du sol, on lance l'asservissement du drone
-        while altitude > 0.25:
+        while altitude > 0.5:
             # Si le robot est à plus de 10 mètres (5 pour le test) du sol on le fait descendre
             if altitude > 5:
                 print("Descente du drone")
@@ -287,7 +285,7 @@ class Drone:
 
             # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre
             else:
-                centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco_2023()
+                centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco()
             print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y : " + str(centre_aruco_Y))
             # On asservit le drone avec pour consigne la position du centre l'aruco 
             self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)

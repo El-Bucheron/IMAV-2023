@@ -44,7 +44,7 @@ try:
         # On fait aller le drone à ce point
         drone.goto(point, 0.1)
         # On récupre les coordonnées du centre de l'aruco
-        X, Y = drone.camera.detection_aruco_2023()
+        X, Y = drone.camera.detection_aruco()
         # Si la valeur renvoyé n'est pas nulle, l'aruco a bien été détecté et on affiche l'altitude à laquelle il est détecté 
         if X != None:
             print("Aruco détecté à une altitude de " + drone.vehicle.rangefinder.distance + " mètres")
