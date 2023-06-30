@@ -14,6 +14,12 @@ from detection_target import Detection
 
 
 class Drone:
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Atterissage Aruco
+# ------------------------------------------------------------------------------------------------------------------------------------------
+
     
     # Constructeur de la classe se connectant au drone
     def __init__(self):     
@@ -51,8 +57,30 @@ class Drone:
     #get_mode - get current mode of vehicle 
     def get_mode(self):
         return self.vehicle.mode.name
-    
 
+
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Fonctions de pilotage du drone
+# ------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Fonction faisant décoler le drone à l'altitude passée en argument
+    def takeoff(self, altitude):
+        # Ordre de décollage du drone
+        self.vehicle.simple_takeoff(altitude)
+        # On attend que le drone soit à 95% de l'altitude souhaitée pour sortir de la fonction,
+        # car la fonction "simple_takeoff" ne bloque pas le déroulement du programme 
+        while self.vehicle.rangefinder.distance < 0.95*altitude:
+            pass
+
+    def goto(self, targetLocation, distanceAccuracy):
+        # Ordre de déplacement du drone
+        self.vehicle.simple_goto(targetLocation)
+        # On attend que le drone soit arrivé assez près du point 
+        # car la fonction "simple_goto" ne bloque pas le déroulement du programme 
+        while get_distance_metres(self.vehicle.location.global_relative_frame, targetLocation) > distanceAccuracy:
+            pass
 
 
     # Décollage du drone jusqu'à la distance fournie en argument
@@ -86,9 +114,7 @@ class Drone:
                 break
             time.sleep(1)
                   
-
-    
-    
+   
     # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant 0.1 seconde 
     def set_velocity(self, velocity_x, velocity_y, velocity_z):
         # create the SET_POSITION_TARGET_LOCAL_NED command
@@ -132,8 +158,9 @@ class Drone:
                 break  # Then break the waiting loop
             time.sleep(1)
 
-
-
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Suivi de véhicule
+# ------------------------------------------------------------------------------------------------------------------------------------------
 
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
@@ -184,6 +211,8 @@ class Drone:
         
         #Envoie de la consigne de vitesse au drone
         self.drone.set_velocity(vy, vx, 0) # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
+
+
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
