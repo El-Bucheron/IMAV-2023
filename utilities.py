@@ -7,13 +7,15 @@ Created on 2022
 from dronekit import LocationGlobalRelative
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
+R = 6371000 # Mean earth radius (meters)
+
 def get_distance_metres(aLocation1, aLocation2):
     """
     Calculate distance in meters between Latitude/Longitude points.
     
-    This uses the ‘haversine’ formula to calculate the great-circle
-    distance between two points – that is, the shortest distance over
-    the earth’s surface earth's poles. More informations at:
+    This uses the 'haversine' formula to calculate the great-circle
+    distance between two points - that is, the shortest distance over
+    the earth's surface earth's poles. More informations at:
     https://www.movable-type.co.uk/scripts/latlong.html
     """
     # Haversine formula to compute distance between two GPS points
@@ -22,7 +24,6 @@ def get_distance_metres(aLocation1, aLocation2):
     realLat = aLocation2.lat
     realLon = aLocation2.lon
 
-    R = 6371000  # Mean earth radius (meters)
     phi_1 = radians(targLat)
     phi_2 = radians(realLat)
     delta_phi = radians(targLat-realLat)    # Latitude difference (radians)
@@ -49,7 +50,6 @@ def get_GPS_location(aLocation, bearing, distance):
     d = distance
 
     # Inverse of Haversine
-    R = 6371000  # Mean earth radius (meters)
     phi_1 = radians(initLat)
     lambda_1 = radians(initLon)
     phi_2 = asin(sin(phi_1) * cos(d/R) + cos(phi_1) * sin(d/R) * cos(theta))
