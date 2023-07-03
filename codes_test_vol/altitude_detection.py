@@ -26,7 +26,9 @@ from dronekit import LocationGlobalRelative
 
 #Instanciation d'un objet "Drone" pour contrôler le drone 
 drone = Drone()
-# On attend que le drone soit en mode guided
+# On attend que le drone soit en mode STABILIZE puis "GUIDED"
+while drone.get_mode() != "STABILIZE":
+    print("En attente du mode STABILIZE")
 while drone.get_mode() != "GUIDED":
     print("En attente du mode GUIDED")
 # On fait s'envoler le drone à une atltitude de 5 mètres

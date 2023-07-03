@@ -24,6 +24,8 @@ from time import sleep
 
 #Instanciation de l'objet drone
 drone = Drone()
+while drone.get_mode() != "STABILIZE":
+    print("En attente du mode STABILIZE")
 # Attente du mode "GUIDED"
 while drone.get_mode() != "GUIDED":    
     # On affiche l'altitude de vol
