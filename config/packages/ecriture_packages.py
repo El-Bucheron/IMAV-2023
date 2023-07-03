@@ -14,6 +14,6 @@ installed_packages_list = ["%s %s" % (i.key, i.version) for i in working_set]
 #Ouverture du fichier dans lequel on écrit les informations
 file = open("packages_installes.txt", "w")
 #On lie les string du tableau "installed_packages_list" avec des sauts de ligne et on écrit cette chaîne dans le fichier "file"
-file.write('\n'.join(sorted_installed_packages_list))
+file.write('\n'.join(installed_packages_list))
 #Fermeture du fichier
 file.close()
