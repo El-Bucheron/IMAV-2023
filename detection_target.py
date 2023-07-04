@@ -59,17 +59,19 @@ class Detection:
 
     # Fonction permettant de prendre une photo avec la camera
     # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
-    def prise_photo(self, chemin_photo=""):
+    def prise_photo(self):
         photo = np.empty((self.vertical_res * self.horizotal_res * 3), dtype=np.uint8)
+        # Prise de la photo
         self.camera.capture(photo, 'bgr')
+        # Remaniage de la forme de la photo pour pouvoir la corrigée
         photo = photo.reshape((self.vertical_res, self.horizotal_res, 3))
+        # Correction de la photo avec les matrices de correction
         photo_corrigee = cv2.undistort(photo, self.camera_matrix, self.camera_distortion, None, self.matrice_camera_corrigee)
+        # Rognage de la matrice pour ne garder que la partie corrigée
         photo_corrigee = photo_corrigee[self.ROI_camera_corrigee[1]:self.ROI_camera_corrigee[1]+self.ROI_camera_corrigee[3],
                                         self.ROI_camera_corrigee[0]:self.ROI_camera_corrigee[0]+self.ROI_camera_corrigee[2]]
-        if chemin_photo != "":
-            cv2.imwrite(chemin_photo, photo_corrigee)
-        else:
-            return photo_corrigee
+        # Renvoie de la photo corrigée
+        return photo_corrigee
 
 
     def Detection_position(self):
