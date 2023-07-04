@@ -223,21 +223,20 @@ class Detection:
         self.rawCapture.truncate(0)
         gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Recherche d'aruco dans l'image prise
-        corners, _, _ = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters,
+        corners, ids, _ = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters,
                                   cameraMatrix=self.camera_matrix, distCoeff=self.camera_distortion)
         # Si la longueur du tuple "corners", n'est pas de vide, i.e. si au moins un aruco est détecté
+            
         if len(corners) != 0 :            
             # On calcule la moyenne en x et y des arrêtes de l'aruco
             x_centerPixel_target = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
             y_centerPixel_target = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
+            aruco_id = ids.flatten()[0]  # Select the first ArUco id from the list
             # On renoive les coordronnées calculées
-            return x_centerPixel_target, y_centerPixel_target
+            return x_centerPixel_target, y_centerPixel_target, aruco_id
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
-            return None, None
-
-
-
+            return None, None, None
 
 
     # Fonction servant à détecter l'aruco quand l'altitude est trop élevée pour qu'on le détecte directement avec la fonction "detection_aruco"
