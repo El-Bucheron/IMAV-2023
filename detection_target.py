@@ -215,40 +215,68 @@ class Detection:
           
 
     # Fonction servant trouver les arucos vus par la caméra et renvoyant les coordonnées de son centre
-    # Si aucun n'aruco n'est détecté, on renvoie des variables vides      
-    def detection_aruco(self):
-        # Capture et traitement de l'image prise par la picaméra
-        self.camera.capture(self.rawCapture, format="bgr")
-        frame = self.rawCapture.array
-        self.rawCapture.truncate(0)
-        gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # Si aucun n'aruco n'est détecté, on renvoie des variables vides
+    # On mettant le paramètre "return_image" à True, on renvoie également l'image acquise avec visualisation de l'aruco et de son ID
+    # On trace alors les contours de l'aruco et on écrit son ID à côté de lui.
+    # Si l'aruco n'a pas été détecté et que "return_image=True", on renvoie simplement l'image acquise    
+    def detection_aruco(self, return_image = False):
+
+        # Prise de la photo avec la PiCamera
+        image = self.prise_photo()
+        # Conversion de l'image en nuances de gris
+        gray  = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Recherche d'aruco dans l'image prise
-        corners, ids, _ = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters,
-                                  cameraMatrix=self.camera_matrix, distCoeff=self.camera_distortion)
-        # Si la longueur du tuple "corners", n'est pas de vide, i.e. si au moins un aruco est détecté
-            
-        if len(corners) != 0 :            
-            # On calcule la moyenne en x et y des arrêtes de l'aruco
+        corners, ids, _ = aruco.detectMarkers(image=gray, dictionary=self.aruco_dict, parameters=self.parameters)
+        
+        # Si la longueur du tuple "corners", n'est pas de vide, i.e. si au moins un aruco est détecté            
+        if len(corners) != 0 :      
+
+            # On calcule la moyenne des positions en x et y des arrêtes de l'aruco
             x_centerPixel_target = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
             y_centerPixel_target = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
-            aruco_id = ids.flatten()[0]  # Select the first ArUco id from the list
-            # On renoive les coordronnées calculées
-            return x_centerPixel_target, y_centerPixel_target, aruco_id
+            # On récupère l'ID de l'aruco détecté
+            aruco_id = ids.flatten()[0]
+
+            # Si l'on ne souhaite pas renvoyer l'image, on renvoie uniquement les coordonnées du centre de l'aruco et son ID
+            if return_image == False:
+                return x_centerPixel_target, y_centerPixel_target, aruco_id
+            
+            # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
+            # On trace des lignes entourant l'Aruco marker 
+            cv2.line(image, corners[0][0][0], corners[0][0][1], (0, 255, 0), 2)
+            cv2.line(image, corners[0][0][1], corners[0][0][2], (0, 255, 0), 2)
+            cv2.line(image, corners[0][0][2], corners[0][0][3], (0, 255, 0), 2)
+            cv2.line(image, corners[0][0][3], corners[0][0][0], (0, 255, 0), 2)
+            # On trace un point rouge au centre de l'Aruco
+            cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
+            # On écrit l'ID de l'aruco détecté au-dessus de l'aruco 
+            cv2.putText(image, str(aruco_id), (corners[0][0][0][0], corners[0][0][0][1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # On renvoie les coordronnées calculées et l'ID de l'aurco et l'image modifiée
+            return x_centerPixel_target, y_centerPixel_target, aruco_id, image
+        
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
-            return None, None, None
+            # Si l'on ne souhaite pas récupérer l'image, on renvoie 3 variables vides 
+            if return_image == False:
+                return None, None, None
+            # Si l'on souhaite récupérer l'image, on renvoie 3 variables vides et l'image acquise
+            else:
+                return None, None, None, image
+
+
 
 
     # Fonction servant à détecter l'aruco quand l'altitude est trop élevée pour qu'on le détecte directement avec la fonction "detection_aruco"
     # Pour cela, on assume que l'aruco vu du ciel, après quelques corrections d'images, est un carré blanc
     # La fonction renvoie les coordonnées du carré blanc si elle en trouve un ou des variables vides sinon
-    def detection_carre_blanc(self, altitude):
-        # Capture et traitement de l'image prise par la picaméra
-        self.camera.capture(self.rawCapture, format="bgr")
-        frame = self.rawCapture.array
-        self.rawCapture.truncate(0)
+    # On mettant le paramètre "return_image" à True, on renvoie également l'image acquise avec visualisation du contour et son centre
+    # Si aucun carré blanc n'a pas été détecté et que "return_image=True", on renvoie simplement l'image acquise    
+    def detection_carre_blanc(self, altitude, return_image = False):
+        
+        # Prise de la photo avec la PiCamera
+        image = self.prise_photo()
         #------------- Image processing for white squares -------------
-        blur = cv2.GaussianBlur(frame,(5,5),0)       # Gaussian blur filter  
+        blur = cv2.GaussianBlur(image,(5,5),0)       # Gaussian blur filter  
         hls = cv2.cvtColor(blur, cv2.COLOR_BGR2HLS)  # Convert from BGR to HLS color space  
         # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
         lower_bound = (0,150,0)
@@ -270,18 +298,39 @@ class Detection:
             approx = cv2.approxPolyDP(c, 0.04 * peri, True)
             # Récupération de l'aire du contour
             area = cv2.contourArea(c)
-            # Si le contour possède 4 côtés, et est 
-            if 10000*altitude**-2 < area < 60000*altitude**-2 and len(approx) == 4:
-                # Récupération de la longueur et largeur du contour
-                (_, _, w, h) = cv2.boundingRect(approx)
-                # Si le rapport longueur/largeur est compris entre 0.9 et 1.1, i.e. qu'il s'agit d'un carré
-                if 0.9 <= (w / float(h)) <= 1.10:
-                    # Calcule du centre du carré avec la moyenne des coordonnées en X et Y
-                    x_centerPixel_target = int(np.mean(c, axis=0)[0][0])
-                    y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
-                    # Si le pixel central est blanc, i.e. que le carré est blanc
-                    if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
-                        # On renvoie les coordonnées du centre du carré
+            # Récupération de la longueur et largeur du contour
+            (_, _, w, h) = cv2.boundingRect(approx)
+
+            # On vérifie que le contour possède la bonne aire
+            # que le rapport longueur/largeur est compris entre 0.9 et 1.1 
+            # et que le contour possède 4 côtés
+            if 10000*altitude**-2 < area < 60000*altitude**-2 and 0.9 <= (w / float(h)) <= 1.1 and len(approx) == 4:
+                
+                # Calcul du centre du carré avec la moyenne des coordonnées en X et Y
+                x_centerPixel_target = int(np.mean(c, axis=0)[0][0])
+                y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
+
+                # On vérifie que le centre du carré est blanc
+                if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
+
+                    # Si on ne souhaite pas renvoyer l'image, on renvoie uniquement les coordonnées du centre du carré blanc détecté
+                    if return_image == False:
                         return x_centerPixel_target, y_centerPixel_target
-        # Si aucun carré blanc n'a été détecté, on renvoie des variables vides
-        return None, None
+                    
+                    # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
+                    # On trace le contour détecté
+                    cv2.drawContours(image, [c], 0, (0,255,0), 3) 
+                    # On trace un point rouge au centre du contour
+                    cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
+                    # On renvoie les coordronnées calculées et l'image modifiée
+                    return x_centerPixel_target, y_centerPixel_target, image
+
+
+        # Si aucun carré blanc n'a pas été détecté, on renvoie des variables vides
+        else:
+            # Si l'on ne souhaite pas récupérer l'image, on renvoie 2 variables vides 
+            if return_image == False:
+                return None, None
+            # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image acquise
+            else:
+                return None, None, image
