@@ -1,7 +1,9 @@
 # Imports
 import cv2
 import numpy as np
+import os.path
 from picamera import PiCamera
+from time import sleep
 
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 25, 0.001)
@@ -15,21 +17,33 @@ imgpoints = [] # 2d points in image plane.
 # Initialisation du compteur d'images prise en compte pour la calibration
 images_valides=0
 
-vertical_res = int(1.5*480)
-horizotal_res = int(1.5*640)
+vertical_res = 480
+horizotal_res = 640
 picamera = PiCamera()
 picamera.resolution = (horizotal_res, vertical_res)
 photo = np.empty((vertical_res * horizotal_res * 3), dtype=np.uint8)
 
+path_camera_matrix = "cameraMatrix" + str(horizotal_res) + "x" + str(vertical_res) + ".txt"
+path_camera_distrotion = "cameraDistortion" + str(horizotal_res) + "x" + str(vertical_res) + ".txt"
+path_image_controle = "ImageControle" + str(horizotal_res) + "x" + str(vertical_res) + ".jpg"
+
+picamera.start_preview()
+sleep(15)
+picamera.stop_preview()
+
 try:
+    picamera.start_preview()
     for frame in picamera.capture_continuous(photo, format="bgr", use_video_port=True):
         
+        # Prise de la photo
         photo = frame.reshape((vertical_res, horizotal_res, 3))
-        gray = cv2.cvtColor(photo, cv2.COLOR_BGR2GRAY)
-        
+        gray = cv2.cvtColor(photo, cv2.COLOR_BGR2GRAY)        
         # Récupération des coins de l'échiquier 
         ret, corners = cv2.findChessboardCorners(gray, (7,7), None)
-        
+        # Attenteq
+        if cv2.waitKey(1) &0xFF == ord('q'):
+            print("Fin de la prise de photos")
+            break
         # Si les coins n'ont pas été détectés, on indique que l'image n'est pas valide et on interrompt l'itération en cours 
         if ret == False:
             print("Echiquier non détecté, image non prise en compte")
@@ -46,56 +60,57 @@ try:
         imgpoints.append(corners2)
         images_valides+=1
         
-        if cv2.waitKey(1) &0xFF == ord('q'):
-            print("Fin de la prise de photos")
-            break
-
-
-    
 
 
     # Calcul et affichage des matrices de caméra et de distortion
+    cv2.destroyAllWindows()
     print("Calcul des matrices en cours")
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    _, new_mtx, new_dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     print("Matrice de la caméra obtenue :")
-    print(mtx)
+    print(new_mtx)
     print("Matrice de distortion obtenue :")
-    print(dist)
+    print(new_dist)
+    
+    if not os.path.isfile(path_image_controle):
+        print("Faire en sorte que l'échiquier prenne tout l'espace sur la caméra et appuyez sur 's'")
+        picamera.start_preview()
+        while cv2.waitKey(0) & 0xFF != ord("s"):
+            pass
+        picamera.capture(path_image_controle)
+        picamera.stop_preview()
+    imageControle = cv2.imread(path_image_controle)
 
-    newcameramtx, zoi = cv2.getOptimalNewCameraMatrix(mtx, dist, picamera.resolution, 1, picamera.resolution) 
-    image_corrige = cv2.undistort(photo, mtx, dist, None, newcameramtx)
-    image_corrige = image_corrige[zoi[1]:zoi[1]+zoi[3], zoi[0]:zoi[0]+zoi[2]]
-    cv2.imshow('Image corrige', image_corrige)
+        
 
-
-    #Initialisation de l'erreur totale
-    erreur_totale = 0
-    # On calcule l'erreur pour chaque image utilisée pour la calibration
-    for i in range(len(objpoints)):
-        # On détermine l'image projetée
-        iamgeProjetee, _ =cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-        # On calcule la norme entre l'image projetée et l'image obtenue et on ajoute l'erreur à l'erreur totale
-        erreur_totale += cv2.norm(imgpoints[i], iamgeProjetee, cv2.NORM_L2)/len(iamgeProjetee)
-    # Calcul de l'erreur moyenne
-    erreur_moyenne = [erreur_totale/len(objpoints)]
-    print("Erreur moyenne = " + str(erreur_moyenne[0]))
-    # Affichage de l'erreur moyenne pour la configuration en usage
+    # Correction d'image avec les nouvelles matrices
+    new_cameramtx, new_zoi = cv2.getOptimalNewCameraMatrix(new_mtx, new_dist, picamera.resolution, 1, picamera.resolution)
+    nouvelle_correction = cv2.undistort(imageControle, new_mtx, new_dist, None, new_cameramtx)
+    nouvelle_correction = nouvelle_correction[new_zoi[1]:new_zoi[1]+new_zoi[3], new_zoi[0]:new_zoi[0]+new_zoi[2]]
+    cv2.imshow('Image de contrôle : nouvelles matrices', nouvelle_correction)
+    
+    # Correction d'image avec les anciennnes matrices (dans le cas où elles existent)
     try:
-        print("Erreur de la configuration ecritre : " + np.loadtxt("erreurMoyenne" + str(horizotal_res) + "x" + str(vertical_res) + ".txt", delimiter=',')[0])
-    except:
+        old_mtx = np.loadtxt(path_camera_matrix, delimiter=',')
+        old_dist = np.loadtxt(path_camera_distrotion, delimiter=',')
+        old_cameramtx, old_zoi = cv2.getOptimalNewCameraMatrix(old_mtx, old_dist, picamera.resolution, 1, picamera.resolution)
+        ancienne_correction = cv2.undistort(imageControle, old_mtx, old_dist, None, old_cameramtx)
+        ancienne_correction = ancienne_correction[old_zoi[1]:old_zoi[1]+old_zoi[3], old_zoi[0]:old_zoi[0]+old_zoi[2]]
+        cv2.imshow('Image de contrôle : anciennes matrices', ancienne_correction)
+    except FileNotFoundError:
         pass
+    
 
     # Si la touche pressé est 's' on écrit les matrices dans un fichier .txt, un pour chaque matrice
     print("Appuyer sur 's' pour enregistrer les valeurs")
     if cv2.waitKey(0) & 0xFF == ord("s"):
         print("Matrices enregistrées")
-        np.savetxt("cameraMatrix" + str(horizotal_res) + "x" + str(vertical_res) + ".txt", mtx, delimiter=',')
-        np.savetxt("cameraDistortion" + str(horizotal_res) + "x" + str(vertical_res) + ".txt", dist, delimiter=',')
-        np.savetxt("erreurMoyenne" + str(horizotal_res) + "x" + str(vertical_res) + ".txt", erreur_moyenne, delimiter=',')
+        np.savetxt(path_camera_matrix, new_mtx, delimiter=',')
+        np.savetxt(path_camera_distrotion, new_dist, delimiter=',')
     else:
         print("Matrices défaussées")
 
 
 finally:
     cv2.destroyAllWindows()
+    picamera.stop_preview()
 
