@@ -244,15 +244,15 @@ class Detection:
                 return x_centerPixel_target, y_centerPixel_target, aruco_id
             
             # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
-            # On trace des lignes entourant l'Aruco marker 
-            cv2.line(image, corners[0][0][0], corners[0][0][1], (0, 255, 0), 2)
-            cv2.line(image, corners[0][0][1], corners[0][0][2], (0, 255, 0), 2)
-            cv2.line(image, corners[0][0][2], corners[0][0][3], (0, 255, 0), 2)
-            cv2.line(image, corners[0][0][3], corners[0][0][0], (0, 255, 0), 2)
+            # On trace des lignes entourant l'Aruco marker
+            cv2.line(image, (int(corners[0][0][0][0]), int(corners[0][0][0][1])), (int(corners[0][0][1][0]), int(corners[0][0][1][1])), (0, 255, 0), 2)
+            cv2.line(image, (int(corners[0][0][1][0]), int(corners[0][0][1][1])), (int(corners[0][0][2][0]), int(corners[0][0][2][1])), (0, 255, 0), 2)
+            cv2.line(image, (int(corners[0][0][2][0]), int(corners[0][0][2][1])), (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (0, 255, 0), 2)
+            cv2.line(image, (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (int(corners[0][0][0][0]), int(corners[0][0][0][1])), (0, 255, 0), 2)
             # On trace un point rouge au centre de l'Aruco
             cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
             # On écrit l'ID de l'aruco détecté au-dessus de l'aruco 
-            cv2.putText(image, str(aruco_id), (corners[0][0][0][0], corners[0][0][0][1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(image, str(aruco_id), (x_centerPixel_target, y_centerPixel_target-30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             # On renvoie les coordronnées calculées et l'ID de l'aurco et l'image modifiée
             return x_centerPixel_target, y_centerPixel_target, aruco_id, image
         
@@ -332,7 +332,7 @@ class Detection:
         else:
             # Si l'on ne souhaite pas récupérer l'image, on renvoie 2 variables vides 
             if return_image == False:
-                return None, None
+                return None, None, None
             # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image acquise
             else:
                 return None, None, image

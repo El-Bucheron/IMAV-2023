@@ -40,7 +40,7 @@ print("Début de programme")
 try:
     while True:
         # Détection d'un aruco
-        X, _, image = drone.camera.detection_carre_blanc(True)
+        X, _, image = drone.camera.detection_carre_blanc(drone.vehicle.rangefinder.distance, True)
         print(("Carré blanc détecté" if X != None else "Carré blanc non détecté") + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
         # Création du chemin des photos
         chemin_photo = (path + nom_dossier +                                          # Chemin du dossier
