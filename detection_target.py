@@ -70,7 +70,7 @@ class Detection:
         # Rognage de la matrice pour ne garder que la partie corrigée
         photo_corrigee = photo_corrigee[self.ROI_camera_corrigee[1]:self.ROI_camera_corrigee[1]+self.ROI_camera_corrigee[3],
                                         self.ROI_camera_corrigee[0]:self.ROI_camera_corrigee[0]+self.ROI_camera_corrigee[2]]
-        # Renvoie de la photo corrigée
+        # Renvoi de la photo corrigée
         return photo_corrigee
 
 
