@@ -61,6 +61,10 @@ class Detection:
         self.upper_bound_filtre_blanc = (255,255,255)
         self.closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
 
+        # On définit la gamme de couleur de bleu que l'on souhaite
+        self.lower_bound_filtre_bleu = np.array([105, 105, 25])
+        self.upper_bound_filtre_bleu = np.array([160, 255, 200])  
+
 
 
     # Fonction permettant de prendre une photo avec la camera
@@ -99,11 +103,8 @@ class Detection:
             image = imutils.resize(image, width=600)           
             # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)        
-            # On définit la gamme de couleur de bleu que l'on souhaite
-            lower_blue = np.array([105, 105, 25])
-            upper_blue = np.array([160, 255, 200])  
             # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
-            mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)            
+            mask_blue = cv2.inRange(hsv, self.lower_bound_filtre_bleu, self.upper_bound_filtre_bleu)            
             # Création d'un masque binaire inverse pour le reste de l'image
             mask_white = cv2.bitwise_not(mask_blue)            
             # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
@@ -115,7 +116,7 @@ class Detection:
             # Combinaison des deux images pour obtenir le résultat final
             result = cv2.bitwise_or(seg_img_blue, seg_img_white)            
             # Recherche des contours des objets et affichage
-            contours, hier = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             for contour in contours:
                 x, y, w, h = cv2.boundingRect(contour)
@@ -151,74 +152,7 @@ class Detection:
         # Fermeture des fenêtres d'affichage
         cv2.destroyAllWindows()
 
-          
-    
-    def Detection_carre_bleu(self):
-      
-        # Délai pour que la caméra se stabilise
-        time.sleep(2)
 
-        for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
-            # Lecture de l'image depuis le flux
-            image = frame.array
-            # Redimensionnement de l'image
-            image = imutils.resize(image, width=600)
-            cv2.imshow('image_originale', image)
-            # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            # Définition de la gamme de couleur bleue souhaitée
-            lower_blue = np.array([95, 105, 25])
-            upper_blue = np.array([180, 255, 200])
-            # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
-            mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
-            # Création d'un masque binaire inverse pour le reste de l'image
-            mask_white = cv2.bitwise_not(mask_blue)
-            # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
-            seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)
-            # Création d'une image blanche de la même taille que l'image d'origine
-            white_img = np.ones_like(image, dtype=np.uint8) * 255
-            # Application du masque binaire inverse à l'image blanche pour avoir le reste en blanc
-            seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
-            # Combinaison des deux images pour obtenir le résultat final
-            result = cv2.bitwise_or(seg_img_blue, seg_img_white)
-            # Recherche des contours des objets et affichage
-            contours, _ = cv2.findContours(mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-            _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-            contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-            i = 0
-            for contour in contours:
-                x, y, w, h = cv2.boundingRect(contour)
-                if w > 70 and h > 70:
-                    if i == 0:
-                        i = 1
-                        continue
-                    approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
-                    cv2.drawContours(result, [contour], 0, (0, 0, 255), 3)
-                    M = cv2.moments(contour)
-                    if M['m00'] != 0.0:
-                        x = int(M['m10']/M['m00'])
-                        y = int(M['m01']/M['m00'])
-
-                    if len(approx) < 5:
-                        cv2.putText(result, 'Carre', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                    else:
-                        cv2.putText(result, 'Autre', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-
-            # Affichage de l'image après avoir dessiné les contours
-            cv2.imshow('shapes', result)
-
-            # Sortir de la boucle si la touche 'q' est pressée
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-
-            # Effacement du tampon de capture pour la prochaine image
-            self.rawCapture.truncate(0)
-
-        # Fermeture des fenêtres d'affichage
-        cv2.destroyAllWindows()
 
           
 
@@ -309,6 +243,10 @@ class Detection:
             # et que le contour possède 4 côtés
             if 10000*altitude**-2 < area < 60000*altitude**-2 and 0.95 <= (w / float(h)) <= 1.05 and len(approx) == 4:
                 
+                #M = cv2.moments(c)
+                #x_centerPixel_target = int(M["m10"] / M["m00"])
+                #y_centerPixel_target = int(M["m01"] / M["m00"])
+
                 # Calcul du centre du carré
                 x_centerPixel_target = x + int(w/2)
                 y_centerPixel_target = y + int(h/2)
@@ -342,3 +280,49 @@ class Detection:
                 return None, None
             # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image filtrée
             return None, None, image, mask_closing
+
+
+
+
+    def detection_carre_bleu(self):
+    
+        # Prise de la photo avec la PiCamera
+        image = self.prise_photo()
+        # Redimensionnement de l'image
+        image = imutils.resize(image, width=600)
+        # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
+        mask_blue = cv2.inRange(hsv, self.lower_bound_filtre_bleu, self.upper_bound_filtre_bleu)
+        # Création d'un masque binaire inverse pour le reste de l'image
+        mask_white = cv2.bitwise_not(mask_blue)
+        # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
+        seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)
+        # Création d'une image blanche de la même taille que l'image d'origine
+        white_img = np.ones_like(image, dtype=np.uint8) * 255
+        # Application du masque binaire inverse à l'image blanche pour avoir le reste en blanc
+        seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
+        # Combinaison des deux images pour obtenir le résultat final
+        result = cv2.bitwise_or(seg_img_blue, seg_img_white)
+        # Conversion de l'image en nuances de gris
+        gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+        # Threshold
+        _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        # Recherche de contours
+        contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        i = 0
+        for contour in contours:
+            _, _, w, h = cv2.boundingRect(contour)
+            if w > 30 and h > 30:
+                if i == 0:
+                    i = 1
+                    continue
+                peri = cv2.arcLength(contour, True)
+                approx = cv2.approxPolyDP(contour, 0.05 * peri, True)
+                cv2.drawContours(image, [contour], 0, (0, 0, 255), 3)
+                if len(approx) < 5:
+                    return True, image, threshold
+
+        return False, image, threshold 
+        
