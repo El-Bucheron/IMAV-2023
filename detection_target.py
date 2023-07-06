@@ -45,15 +45,21 @@ class Detection:
         sys.path.insert(0, self.package_path)
 
         # Camera calibration path
-        calib_camera_path = self.package_path + "/config/camera/"
+        calib_camera_path = self.package_path + "/config/camera/" + str(self.horizotal_res) + "x" + str(self.vertical_res) + "/"
         self.camera_matrix = np.loadtxt(calib_camera_path+'cameraMatrix.txt', delimiter=',')
         self.camera_distortion = np.loadtxt(calib_camera_path+'cameraDistortion.txt', delimiter=',')
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
 
-        # Definir le dictionnaire aruco 
+        # Paramètres pour la détection d'aruco
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
-
+        
+        
+        # Paramètres pour la détection de carré blanc
+        # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
+        self.lower_bound_filtre_blanc = (0,175,0)
+        self.upper_bound_filtre_blanc = (255,255,255)
+        self.closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
 
 
 
@@ -250,20 +256,19 @@ class Detection:
             cv2.line(image, (int(corners[0][0][2][0]), int(corners[0][0][2][1])), (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (0, 255, 0), 2)
             cv2.line(image, (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (int(corners[0][0][0][0]), int(corners[0][0][0][1])), (0, 255, 0), 2)
             # On trace un point rouge au centre de l'Aruco
-            cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
+            cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 255, 0), -1)
             # On écrit l'ID de l'aruco détecté au-dessus de l'aruco 
-            cv2.putText(image, str(aruco_id), (x_centerPixel_target, y_centerPixel_target-30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-            # On renvoie les coordronnées calculées et l'ID de l'aurco et l'image modifiée
+            cv2.putText(image, str(aruco_id), (x_centerPixel_target, y_centerPixel_target-15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            # On renvoie les coordronnées calculées, l'ID de l'aurco et l'image modifiée
             return x_centerPixel_target, y_centerPixel_target, aruco_id, image
-        
+ 
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
             # Si l'on ne souhaite pas récupérer l'image, on renvoie 3 variables vides 
             if return_image == False:
                 return None, None, None
             # Si l'on souhaite récupérer l'image, on renvoie 3 variables vides et l'image acquise
-            else:
-                return None, None, None, image
+            return None, None, None, image
 
 
 
@@ -272,23 +277,19 @@ class Detection:
     # Pour cela, on assume que l'aruco vu du ciel, après quelques corrections d'images, est un carré blanc
     # La fonction renvoie les coordonnées du carré blanc si elle en trouve un ou des variables vides sinon
     # On mettant le paramètre "return_image" à True, on renvoie également l'image acquise avec visualisation du contour et son centre
-    # Si aucun carré blanc n'a pas été détecté et que "return_image=True", on renvoie simplement l'image acquise    
+    # Si aucun carré blanc n'a pas été détecté et que "return_image=True", on renvoie l'image filtrée    
     def detection_carre_blanc(self, altitude, return_image = False):
         
         # Prise de la photo avec la PiCamera
         image = self.prise_photo()
-        #------------- Image processing for white squares -------------
-        blur = cv2.GaussianBlur(image,(5,5),0)       # Gaussian blur filter  
-        hls = cv2.cvtColor(blur, cv2.COLOR_BGR2HLS)  # Convert from BGR to HLS color space  
-        # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
-        lower_bound = (0,150,0)
-        upper_bound = (255,255,255)
-        # Création du masque
-        mask_hls = cv2.inRange(hls, lower_bound, upper_bound)
-        # Matrice de strucutre
-        closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
-        # masque permettant de remplir le centre d'un contour avec une unique couleur
-        mask_closing = cv2.morphologyEx(mask_hls, cv2.MORPH_CLOSE, closing_kernel)
+        # Application d'un floutage gaussion
+        blur = cv2.GaussianBlur(image,(5,5),0)
+        # Conversion de l'image floutée en HLS
+        hls = cv2.cvtColor(blur, cv2.COLOR_BGR2HLS) 
+        # Application du masque
+        mask_hls = cv2.inRange(hls, self.lower_bound_filtre_blanc, self.upper_bound_filtre_blanc)
+        # Masque permettant de remplir le centre d'un contour avec une unique couleur
+        mask_closing = cv2.morphologyEx(mask_hls, cv2.MORPH_CLOSE, self.closing_kernel)
         # Détection des contours
         contours, _ = cv2.findContours(mask_closing, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -301,16 +302,22 @@ class Detection:
             # Récupération de l'aire du contour
             area = cv2.contourArea(c)
             # Récupération de la longueur et largeur du contour
-            (_, _, w, h) = cv2.boundingRect(approx)
+            (x, y, w, h) = cv2.boundingRect(approx)
 
             # On vérifie que le contour possède la bonne aire
             # que le rapport longueur/largeur est compris entre 0.9 et 1.1 
             # et que le contour possède 4 côtés
-            if 10000*altitude**-2 < area < 60000*altitude**-2 and 0.9 <= (w / float(h)) <= 1.1 and len(approx) == 4:
+            if 10000*altitude**-2 < area < 60000*altitude**-2 and 0.95 <= (w / float(h)) <= 1.05 and len(approx) == 4:
                 
-                # Calcul du centre du carré avec la moyenne des coordonnées en X et Y
-                x_centerPixel_target = int(np.mean(c, axis=0)[0][0])
-                y_centerPixel_target = int(np.mean(c, axis=0)[0][1])
+                # Calcul du centre du carré
+                x_centerPixel_target = x + int(w/2)
+                y_centerPixel_target = y + int(h/2)
+                
+                # On trace le contour détecté
+                cv2.drawContours(image, [c], 0, (0,255,0), 3)
+                # On trace un point rouge au centre du contour pour vérifier quel point est regardé
+                cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
+                # On renvoie les coordronnées calculées et l'image modifiée
 
                 # On vérifie que le centre du carré est blanc
                 if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
@@ -321,18 +328,17 @@ class Detection:
                     
                     # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
                     # On trace le contour détecté
-                    cv2.drawContours(image, [c], 0, (0,255,0), 3) 
-                    # On trace un point rouge au centre du contour
+                    cv2.drawContours(image, [c], 0, (0,255,0), 3)
+                    # On trace un point rouge au centre du contour pour vérifier quel point est regardé
                     cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
                     # On renvoie les coordronnées calculées et l'image modifiée
-                    return x_centerPixel_target, y_centerPixel_target, image
+                    return x_centerPixel_target, y_centerPixel_target, image, mask_closing
 
 
         # Si aucun carré blanc n'a pas été détecté, on renvoie des variables vides
         else:
             # Si l'on ne souhaite pas récupérer l'image, on renvoie 2 variables vides 
             if return_image == False:
-                return None, None, None
-            # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image acquise
-            else:
-                return None, None, image
+                return None, None
+            # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image filtrée
+            return None, None, image, mask_closing

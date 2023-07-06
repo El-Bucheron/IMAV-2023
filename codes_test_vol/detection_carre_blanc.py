@@ -40,17 +40,24 @@ print("Début de programme")
 try:
     while True:
         # Détection d'un aruco
-        X, _, image = drone.camera.detection_carre_blanc(drone.vehicle.rangefinder.distance, True)
+        X, _, image, image_filtree = drone.camera.detection_carre_blanc(drone.vehicle.rangefinder.distance, True)
         print(("Carré blanc détecté" if X != None else "Carré blanc non détecté") + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
         # Création du chemin des photos
-        chemin_photo = (path + nom_dossier +                                          # Chemin du dossier
-                        datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
-                        str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-                        str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-                        str('%.2f'%(drone.vehicle.rangefinder.distance)) + "," +      # Encodage de l'altitude
-                        ("yes" if X != None else "no") + ".jpg")                      # Indique si l'aruco a été detecté ou non
+        chemin_photo = (path + nom_dossier +                              # Chemin du dossier
+            datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
+            str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+            str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+            str('%.2f'%(drone.vehicle.rangefinder.distance)) + " " +      # Encodage de l'altitude
+            ("yes" if X != None else "no") + ".jpg")                      # Indique si l'aruco a été detecté ou non
+        chemin_photo_filtre = (path + nom_dossier +                       # Chemin du dossier
+            datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
+            str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+            str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+            str('%.2f'%(drone.vehicle.rangefinder.distance)) + " " +      # Encodage de l'altitude
+            ("yes" if X != None else "no") + " filtre.jpg")               # Indique si l'aruco a été detecté ou non
         # Sauvegarde de la photo
         cv2.imwrite(chemin_photo, image)
+        cv2.imwrite(chemin_photo_filtre, image_filtree)
         # Temporisation 
         sleep(1)
 except KeyboardInterrupt:
