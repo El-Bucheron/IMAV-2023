@@ -25,8 +25,8 @@ from picamera import PiCamera
 from time import sleep
 
 # Variables de travail
-horizotal_res = 640 # en pixel
-vertical_res = 480 # en pixel
+horizotal_res = int(640*2) # en pixel
+vertical_res = int(480*2) # en pixel
 taille_case = 25 # en mm
 
 # S'il n'existe pas déjà, on crée le dossier de paramètres de caméra pour la résolution choisie
@@ -61,11 +61,13 @@ images_valides=0
 
 try:
     # On capture en permancence les photos de la picamera 
-    for frame in picamera.capture_continuous(photo, format="bgr", use_video_port=True):        
+    for frame in picamera.capture_continuous(photo, format="bgr", use_video_port=True):
+        
         # On attend une potentielle frappe de l'utilisateur et si cette touche est "q", on arrête la prise de photo
         if cv2.waitKey(1) &0xFF == ord('q'):
             print("Fin de la prise de photos")
-            break         
+            break
+        
         # Redimensionnement du vecteur représentant l'image
         photo = frame.reshape((vertical_res, horizotal_res, 3))
         # Conversion de l'image en couleur en image de nuances de gris
@@ -75,21 +77,25 @@ try:
         # Si les coins n'ont pas été détectés, on indique que l'image n'est pas valide et on interrompt l'itération en cours 
         if ret == False:
             print("Echiquier non détecté, image non prise en compte")
-            continue        
+            continue
+        
         # Si les coins ont été détectés on les trace et on les affiche pour l'utilisateur
         corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
         cv2.drawChessboardCorners(photo, (7,7), corners2, ret)
-        cv2.imshow("Prise de photo", photo)        
+        cv2.imshow("Prise de photo", photo)
+        
         #Si l'image a été validée on ajoute l'image aux tableaux de données et on incrémente le compteur d'image
         print("Photo valide prise. Nombre total de photos prises : " + str(images_valides))
         objpoints.append(objp)
         imgpoints.append(corners2)
-        images_valides+=1        
+        images_valides+=1
+        
         # Temporisation pour ne pas avoir trop d'image et donc un temps de calcul trop long 
         sleep(0.2)
 
 
     # Calcul et affichage des matrices de caméra et de distortion
+    cv2.destroyAllWindows()
     print("Calcul des matrices en cours")
     _, new_mtx, new_dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     print("Matrice de la caméra obtenue :")
@@ -104,8 +110,7 @@ try:
         # On capture en permancence les photos de la picamera 
         for frame in picamera.capture_continuous(photo, format="bgr", use_video_port=True):
             # On attend une potentielle frappe de l'utilisateur et si cette touche est "q", on arrête la prise de photo
-            if cv2.waitKey(1) &0xFF == ord('q'):
-                print("Fin de la prise de photos")
+            if cv2.waitKey(1) &0xFF == ord('s'):
                 break
             # Redimensionnement du vecteur représentant l'image
             photo = frame.reshape((vertical_res, horizotal_res, 3))
@@ -113,6 +118,7 @@ try:
             cv2.imshow("", photo)
         # On enregistre la dernière photo prise 
         cv2.imwrite(path_image_controle, photo)
+        print("Image ce contrôle prise")
     # On récupère l'iamge de contrôle
     imageControle = cv2.imread(path_image_controle)
 
