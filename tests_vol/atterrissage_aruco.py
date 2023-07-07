@@ -12,20 +12,22 @@ from time import sleep
 
 #Instanciation de l'objet drone
 drone = Drone()
+
+# Attente du mode "STABILIZE"
 while drone.get_mode() != "STABILIZE":
     print("En attente du mode STABILIZE")
+    
 # Attente du mode "GUIDED"
 while drone.get_mode() != "GUIDED":    
-    # On affiche l'altitude de vol
-    print("Altitude = " + str(drone.vehicle.rangefinder.distance))
-    # On essaye de détecter un aruco
-    X,Y = drone.camera.detection_aruco_2023()
-    # Si un aruco est détecté, on affiche les coordonnées renvoyées
-    if X != None:
-        print("Coordonnées trouvées : x = " + str(X) + " ; y = " + str(Y))
-    # Sinon on affiche que l'aruco n'a pas été détecté
-    else:
-        print("Aruco non détecté")
-    sleep(1)
+    print("En attente du mode GUIDED")
+    
+# Décollage du drone
+print("Décollage")
+drone.takeoff(15)
+sleep(10)
+
 # Début de la manoeuvre d'atterissage
-drone.atterrissage_aruco()
+try:
+    drone.atterrissage_aruco()  
+except KeyboardInterrupt:
+    print("Fin de programme")

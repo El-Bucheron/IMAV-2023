@@ -17,7 +17,7 @@ class Drone:
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
-# Atterissage Aruco
+# Initialisation de la classe 
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
     
@@ -25,7 +25,7 @@ class Drone:
     def __init__(self):     
         
         # Coefficients de l'asservissement PID de l'atterrissage
-        self.kp_atterrissage = 0 # Coefficient de la correction proportionnelle mis à 0 car initialisé plus tard
+        self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
         self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
         self.ki_atterrissage = 0.000001  # 0.0000001
         
@@ -35,10 +35,16 @@ class Drone:
         self.ki_suivi_vehicule = 0.000001  # 0.0000001
 
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
-        self.erreurIntegraleX = 0
-        self.erreurIntegraleY = 0
-        self.erreurAnterieureX = 0
-        self.erreurAnterieureY = 0
+        self.erreurIntegraleX_atterrissage = 0
+        self.erreurIntegraleY_atterrissage = 0
+        self.erreurAnterieureX_atterrissage = 0
+        self.erreurAnterieureY_atterrissage = 0
+        
+        # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
+        self.erreurIntegraleX_suivi_vehicule = 0
+        self.erreurIntegraleY_suivi_vehicule = 0
+        self.erreurAnterieureX_suivi_vehicule = 0
+        self.erreurAnterieureY_suivi_vehicule = 0
         
         # Connexion au drone et initialisation de la caméra
         print("Connexion au drone et initialisation de la caméra")
@@ -185,7 +191,7 @@ class Drone:
         alpha = dist_angle + self.vehicle.attitude.yaw
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
-        # Si l'erreur selon x et y est inférieure à 10 pixel, on la considère comme nulle
+        # Si l'erreur selon x et y est inférieure à 10 pixels, on la considère comme nulle
         if abs(erreurX) <= 10:  
             erreurX = 0
         if abs(erreurY) <= 10:
@@ -193,21 +199,21 @@ class Drone:
 
         # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
-        self.erreurDeriveeX = (erreurX - self.erreurAnterieureX)
-        self.erreurDeriveeY = (erreurY - self.erreurAnterieureY)
+        erreurDeriveeX = (erreurX - self.erreurAnterieureX_suivi_vehicule)
+        erreurDeriveeY = (erreurY - self.erreurAnterieureY_suivi_vehicule)
         # Erreur intégrale
-        self.erreurIntegraleX += erreurX
-        self.erreurIntegraleY += erreurY
+        self.erreurIntegraleX_suivi_vehicule += erreurX
+        self.erreurIntegraleY_suivi_vehicule += erreurY
         # Stockage des erreurs en X et Y pour le future calcul de l'erreur dérivée 
-        self.erreurAnterieureX = erreurX
-        self.erreurAnterieureY = erreurY
+        self.erreurAnterieureX_suivi_vehicule = erreurX
+        self.erreurAnterieureY_suivi_vehicule = erreurY
 
         # Calcul de la vitesse corrigée 
-        vx = self.kp_suivi_vehicule * erreurX + self.kd_suivi_vehicule * self.erreurDeriveeX + self.ki_suivi_vehicule * self.erreurIntegraleX
-        vy = self.kp_suivi_vehicule * erreurY + self.kd_suivi_vehicule * self.erreurDeriveeY + self.ki_suivi_vehicule * self.erreurIntegraleY        
-        # Bornage des vitesses à +/- 15 m/s
-        vx = -min(max(vx, -15.0), 15.0)
-        vy = min(max(vy, -15.0), 15.0)
+        vx = self.kp_suivi_vehicule * erreurX + self.kd_suivi_vehicule * erreurDeriveeX + self.ki_suivi_vehicule * self.erreurIntegraleX_suivi_vehicule
+        vy = self.kp_suivi_vehicule * erreurY + self.kd_suivi_vehicule * erreurDeriveeY + self.ki_suivi_vehicule * self.erreurIntegraleY_suivi_vehicule        
+        # Bornage des vitesses à +/- 17.5 m/s
+        vx = -min(max(vx, -17.5), 17.5)
+        vy = min(max(vy, -17.5), 17.5)
         
         #Envoie de la consigne de vitesse au drone
         self.drone.set_velocity(vy, vx, 0) # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
@@ -252,18 +258,18 @@ class Drone:
 
         # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
-        self.erreurDeriveeX = (erreurX - self.erreurAnterieureX)
-        self.erreurDeriveeY = (erreurY - self.erreurAnterieureY)
+        erreurDeriveeX = (erreurX - self.erreurAnterieureX_atterrissage)
+        erreurDeriveeY = (erreurY - self.erreurAnterieureY_atterrissage)
         # Erreur intégrale
-        self.erreurIntegraleX += erreurX
-        self.erreurIntegraleY += erreurY
+        self.erreurIntegraleX_atterrissage += erreurX
+        self.erreurIntegraleY_atterrissage += erreurY
         # Stockage des erreurs en X et Y pour le future calcul de l'erreur dérivée 
-        self.erreurAnterieureX = erreurX
-        self.erreurAnterieureY = erreurY
+        self.erreurAnterieureX_atterrissage = erreurX
+        self.erreurAnterieureY_atterrissage = erreurY
 
         # Calcul de la vitesse corrigée 
-        vx = self.kp_atterrissage * erreurX + self.kd_atterrissage * self.erreurDeriveeX + self.ki_atterrissage * self.erreurIntegraleX
-        vy = self.kp_atterrissage * erreurY + self.kd_atterrissage * self.erreurDeriveeY + self.ki_atterrissage * self.erreurIntegraleY        
+        vx = self.kp_atterrissage * erreurX + self.kd_atterrissage * erreurDeriveeX + self.ki_atterrissage * self.erreurIntegraleX_atterrissage
+        vy = self.kp_atterrissage * erreurY + self.kd_atterrissage * erreurDeriveeY + self.ki_atterrissage * self.erreurIntegraleY_atterrissage        
         # Bornage des vitesses à +/- 5 m/s
         vx = -min(max(vx, -5.0), 5.0)
         vy = min(max(vy, -5.0), 5.0)
@@ -293,26 +299,38 @@ class Drone:
         
         
     def atterrissage_aruco(self):
+        
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
-        # Tant que le drone n'est pas à 25 cm du sol, on lance l'asservissement du drone
+        
+        # Tant que le drone n'est pas à 50 cm du sol, on lance l'asservissement du drone
         while altitude > 0.5:
+            
+            # Récupération de l'altitude du drone
+            altitude = self.vehicle.rangefinder.distance
+            
             # Si le robot est à plus de 10 mètres du sol on le fait descendre
-            if altitude > 10:
+            if altitude > 15:
                 print("Descente du drone")
-                self.set_velocity(0, 0, 1) #sens z positif -> vers le sol            
-            # Si le robot est entre 5 et 10 mètres du sol on cherche l'aruco par détection de carré blanc
+                self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
+                continue
+                
+            # Si le robot est entre 15 et 75 mètres du sol on cherche l'aruco par détection de carré blanc
             # On récupère ensuite le centre de l'aruco détecté selon X et Y (en pixel)
-            elif altitude > 5:
-                centre_aruco_X, centre_aruco_Y = self.camera.detection_carre_blanc()
-            # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre
+            elif altitude > 7.5:
+                print("Détection par carré blanc")
+                centre_aruco_X, centre_aruco_Y, image, image_filtree = self.camera.detection_carre_blanc(altitude, True)
+                
+            # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre            
             else:
-                centre_aruco_X, centre_aruco_Y = self.camera.detection_aruco()
-            print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y : " + str(centre_aruco_Y))
+                print("Détection par aruco")
+                centre_aruco_X, centre_aruco_Y, id_aruco, image = self.camera.detection_aruco(True)
+                
+            print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y))
             # On asservit le drone avec pour consigne la position du centre l'aruco 
             self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
-            # On récupère l'altitude pour entamer la nouvelle boucle d'asservissement
-            altitude = self.vehicle.rangefinder.distance
+            
+            
         # Une fois que le robot est assez bas, on le fait atterrir
         print("Atterrissage")
         self.set_mode("LAND")
