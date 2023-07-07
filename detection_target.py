@@ -69,6 +69,7 @@ class Detection:
 
     # Fonction permettant de prendre une photo avec la camera
     # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
+    @get_excecution_time
     def prise_photo(self):
         photo = np.empty((self.vertical_res * self.horizotal_res * 3), dtype=np.uint8)
         # Prise de la photo
@@ -242,20 +243,11 @@ class Detection:
             # que le rapport longueur/largeur est compris entre 0.9 et 1.1 
             # et que le contour possède 4 côtés
             if 10000*altitude**-2 < area < 60000*altitude**-2 and 0.95 <= (w / float(h)) <= 1.05 and len(approx) == 4:
-                
-                #M = cv2.moments(c)
-                #x_centerPixel_target = int(M["m10"] / M["m00"])
-                #y_centerPixel_target = int(M["m01"] / M["m00"])
 
                 # Calcul du centre du carré
-                x_centerPixel_target = x + int(w/2)
-                y_centerPixel_target = y + int(h/2)
-                
-                # On trace le contour détecté
-                cv2.drawContours(image, [c], 0, (0,255,0), 3)
-                # On trace un point rouge au centre du contour pour vérifier quel point est regardé
-                cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
-                # On renvoie les coordronnées calculées et l'image modifiée
+                M = cv2.moments(c)
+                x_centerPixel_target = int(M["m10"] / M["m00"])
+                y_centerPixel_target = int(M["m01"] / M["m00"])
 
                 # On vérifie que le centre du carré est blanc
                 if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
@@ -268,7 +260,7 @@ class Detection:
                     # On trace le contour détecté
                     cv2.drawContours(image, [c], 0, (0,255,0), 3)
                     # On trace un point rouge au centre du contour pour vérifier quel point est regardé
-                    cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 0, 255), -1)
+                    cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 2, (0, 0, 255), -1)
                     # On renvoie les coordronnées calculées et l'image modifiée
                     return x_centerPixel_target, y_centerPixel_target, image, mask_closing
 
