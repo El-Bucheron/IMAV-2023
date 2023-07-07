@@ -6,6 +6,7 @@ Created on 2022
 """
 from dronekit import LocationGlobalRelative
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
+import time
 
 R = 6371000 # Mean earth radius (meters)
 
@@ -72,3 +73,18 @@ def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, 
         dist_x = altitude*(x_target_center - x_image_center)*dist_coeff_x
         dist_y = altitude*(y_target_center - y_image_center)*dist_coeff_y
         return sqrt(dist_x**2+dist_y**2), atan2(dist_y, dist_x)
+
+# Décorateur permettant d'afficher le temps d'excécution d'une fonction 
+def get_excecution_time(function):
+    def timer(*args, **kwargs):
+        # Stockage du temps de départ de la fonction
+        start_time = time.time()
+        # Appel de la fonction
+        result = function(*args, **kwargs)
+        # Stockage du temps de fin de la fonction
+        end_time = time.time()
+        # Affichage du temps de calcul
+        print(f'Temps d\'excécution "{function.__name__}" : {end_time-start_time:.4f} ms')
+        # revoi du résultat de la fonction appelée
+        return result
+    return timer 
