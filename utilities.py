@@ -35,6 +35,8 @@ def get_distance_metres(aLocation1, aLocation2):
 
     return d
 
+
+
 def get_GPS_location(aLocation, bearing, distance):
     """
     Calculate GPS target given distance and bearing from GPS start.
@@ -58,6 +60,8 @@ def get_GPS_location(aLocation, bearing, distance):
     
     return LocationGlobalRelative(degrees(phi_2), degrees(lambda_2), 0)
 
+
+
 def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, y_target_center, altitude, dist_coeff_x, dist_coeff_y):
     """
     Calculate distance between two objects in a picture.
@@ -73,6 +77,8 @@ def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, 
         dist_x = altitude*(x_target_center - x_image_center)*dist_coeff_x
         dist_y = altitude*(y_target_center - y_image_center)*dist_coeff_y
         return sqrt(dist_x**2+dist_y**2), atan2(dist_y, dist_x)
+
+
 
 # Décorateur permettant d'afficher le temps d'excécution d'une fonction 
 def get_excecution_time(function):

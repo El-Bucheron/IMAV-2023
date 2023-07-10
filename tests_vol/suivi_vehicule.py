@@ -37,6 +37,7 @@ try:
     print("Début de l'assservissement")
     while True:
         centre_aruco_X, centre_aruco_Y, image, image_filtrée = drone.camera.detection_aruco(True)
+        print(("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) if centre_aruco_X != None elsse "Aruco non détecté")
         drone.asservissement_suivi_vehicule(centre_aruco_X, centre_aruco_Y)
         
 # Arrêt de l'asservissement avec un Ctrl+C

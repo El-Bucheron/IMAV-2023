@@ -13,21 +13,20 @@ from time import sleep
 #Instanciation de l'objet drone
 drone = Drone()
 
-# Attente du mode "STABILIZE"
+# Attente du mode "STABILIZE" puis du mode "Guided"
 while drone.get_mode() != "STABILIZE":
     print("En attente du mode STABILIZE")
-    
-# Attente du mode "GUIDED"
 while drone.get_mode() != "GUIDED":    
     print("En attente du mode GUIDED")
     
 # Décollage du drone
 print("Décollage")
-drone.takeoff(15)
+drone.takeoff(5)
 sleep(10)
 
-# Début de la manoeuvre d'atterissage
+print("Début de la manoeuvre d'atterissage")
 try:
-    drone.atterrissage_aruco()  
+    drone.atterrissage_aruco_david()  
 except KeyboardInterrupt:
+    drone.set_mode("LAND")
     print("Fin de programme")

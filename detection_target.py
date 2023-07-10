@@ -29,8 +29,8 @@ class Detection:
         sensor_height = 2.74  # Sensor length (y dimension) [mm]  
         self.dist_coeff_x = sensor_length/(focal_length*self.horizotal_res)
         self.dist_coeff_y = sensor_height/(focal_length*self.vertical_res)
-        self.x_imageCenter = int(self.horizotal_res/2)
-        self.y_imageCenter = int(self.vertical_res/2)  
+        #self.x_imageCenter = int(self.horizotal_res/2)
+        #self.y_imageCenter = int(self.vertical_res/2)  
 
         # Intialisation de la picamera
         self.camera = PiCamera()
@@ -49,7 +49,11 @@ class Detection:
         self.camera_matrix = np.loadtxt(calib_camera_path+'cameraMatrix.txt', delimiter=',')
         self.camera_distortion = np.loadtxt(calib_camera_path+'cameraDistortion.txt', delimiter=',')
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
-
+        
+        #
+        self.x_imageCenter = int(self.ROI_camera_corrigee[1]/2)
+        self.y_imageCenter = int(self.ROI_camera_corrigee[3]/2)
+        
         # Paramètres pour la détection d'aruco
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
@@ -69,7 +73,6 @@ class Detection:
 
     # Fonction permettant de prendre une photo avec la camera
     # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
-    @get_excecution_time
     def prise_photo(self):
         photo = np.empty((self.vertical_res * self.horizotal_res * 3), dtype=np.uint8)
         # Prise de la photo
@@ -267,6 +270,7 @@ class Detection:
 
         # Si aucun carré blanc n'a pas été détecté, on renvoie des variables vides
         else:
+            #return (None, None, image, mask_closing) if return_image == True else (None, None)
             # Si l'on ne souhaite pas récupérer l'image, on renvoie 2 variables vides 
             if return_image == False:
                 return None, None
