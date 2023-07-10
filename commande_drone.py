@@ -7,11 +7,13 @@ Created on 2022
 """
 import time
 import numpy as np
+import cv2
 from math import atan2, cos, sin, sqrt
 from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
 from pymavlink import mavutil
-from utilities import get_distance_metres
+from utilities import *
 from detection_target import Detection
+from datetime import datetime
 
 
 
@@ -296,7 +298,7 @@ class Drone:
         
         
         
-    def atterrissage_aruco_matthieu(self):
+    def atterrissage_aruco_matthieu(self, folderpath = ""):
         
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
@@ -319,13 +321,42 @@ class Drone:
                 print("Détection par carré blanc")
                 centre_aruco_X, centre_aruco_Y, image, image_filtree = self.camera.detection_carre_blanc(altitude, True)
                 
+                if folderpath != "":
+                    chemin_photo = (folderpath +                                     # Chemin du dossier
+                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +          # Heure de prise de la photo  
+                        str(self.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+                        str(self.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+                        str('%.2f'%(self.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
+                    chemin_photo_filtre = (folderpath +                                 # Chemin du dossier
+                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +             # Heure de prise de la photo  
+                        str(self.vehicle.location.global_relative_frame.lat) + "," +    # Encodage de la Latitude
+                        str(self.vehicle.location.global_relative_frame.lon) + "," +    # Encodage de la longitude
+                        str('%.2f'%(self.vehicle.rangefinder.distance)) + "filtre.jpg") # Encodage de l'altitude
+                    # Traçage d'un cercle au centre de l'image
+                    cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                    # Sauvegarde de la photo
+                    cv2.imwrite(chemin_photo, image)
+                    cv2.imwrite(chemin_photo_filtre, image_filtree)
+
+           
             # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre            
             else:
                 print("Détection par aruco")
-                centre_aruco_X, centre_aruco_Y, id_aruco, image = self.camera.detection_aruco(True)
-                
-            print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y))
-            # On asservit le drone avec pour consigne la position du centre l'aruco 
+                centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
+
+                if folderpath != "":
+                    chemin_photo = (folderpath +                                     # Chemin du dossier
+                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +          # Heure de prise de la photo  
+                        str(self.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+                        str(self.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+                        str('%.2f'%(self.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
+                    # Traçage d'un cercle au centre de l'image
+                    cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                    # Sauvegarde de la photo
+                    cv2.imwrite(chemin_photo, image)
+
+            # On asservit le drone avec pour consigne la position du centre l'aruco    
+            print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y)) 
             self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
             
             
@@ -347,7 +378,7 @@ class Drone:
                 altitude = self.vehicle.rangefinder.distance
                 
         # Détection du centre de l'aruco
-        centre_aruco_X, centre_aruco_Y, id_aruco, image = self.camera.detection_aruco(True)
+        centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
         
         # Calcul des coordonnées GPS de l'arucco
         centre_aruco_lat = self.vehicle.location.global_frame.lat + centre_aruco_X / 111111.0
@@ -358,18 +389,19 @@ class Drone:
                                                                  #centre_aruco_X, centre_aruco_Y,
                                                                  #self.vehicle.rangefinder.distance, self.camera.dist_coeff_x, self.camera.dist_coeff_y)
         #current_location = LocationGlobalRelative(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, 0)
-        #estimated_location = get_GPS_location(current_location, drone_object.vehicle.attitude.yaw + angle_vision, distance_vision)
+        #estimated_location = get_GPS_location(current_location, self.vehicle.attitude.yaw + angle_vision, distance_vision)
+        #self.vehicle.simple_goto(estimated_location)
         
         print("Latitude de l'aruco : " + str(centre_aruco_lat) + " ; Longitude de l'aruco : " + str(centre_aruco_lon))
         
         # Déplacement du drone jusqu'à la position de l'aruco
         print("Déplacement jusqu'à la position de l'aruco")
         target_location = LocationGlobalRelative(centre_aruco_lat, centre_aruco_lon, self.vehicle.rangefinder.distance)
-        vehicle.simple_goto(target_location)
+        self.vehicle.simple_goto(target_location)
         
         # Envoi de la commande d'atterissage
         print("Atterissage sur aruco")
-        msg = vehicle.message_factory.landing_target_encode(
+        msg = self.vehicle.message_factory.landing_target_encode(
             0,          # time_boot_ms (non utilisé)
             0,          # target num
             0,          # frame
@@ -378,7 +410,5 @@ class Drone:
             0,          # altitude. Not supported.
             0,0         # size of target in radians
         )
-        vehicle.send_mavlink(msg)
-        vehicle.flush()
-        
- 
+        self.vehicle.send_mavlink(msg)
+        self.vehicle.flush()

@@ -50,7 +50,7 @@ class Detection:
         self.camera_distortion = np.loadtxt(calib_camera_path+'cameraDistortion.txt', delimiter=',')
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
         
-        #
+        # Calucl du centre de l'image après correction de l'image
         self.x_imageCenter = int(self.ROI_camera_corrigee[1]/2)
         self.y_imageCenter = int(self.ROI_camera_corrigee[3]/2)
         
@@ -86,6 +86,8 @@ class Detection:
                                         self.ROI_camera_corrigee[0]:self.ROI_camera_corrigee[0]+self.ROI_camera_corrigee[2]]
         # Renvoi de la photo corrigée
         return photo_corrigee
+
+
 
 
     def Detection_position(self):
@@ -178,14 +180,14 @@ class Detection:
         if len(corners) != 0 :      
 
             # On calcule la moyenne des positions en x et y des arrêtes de l'aruco
-            x_centerPixel_target = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
-            y_centerPixel_target = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
+            x_aruco_center = int((corners[0][0][0][0]+ corners[0][0][1][0]+ corners[0][0][2][0]+ corners[0][0][3][0])*.25)
+            y_aruco_center = int((corners[0][0][0][1]+ corners[0][0][1][1]+ corners[0][0][2][1]+ corners[0][0][3][1])*.25)
             # On récupère l'ID de l'aruco détecté
             aruco_id = ids.flatten()[0]
 
             # Si l'on ne souhaite pas renvoyer l'image, on renvoie uniquement les coordonnées du centre de l'aruco et son ID
             if return_image == False:
-                return x_centerPixel_target, y_centerPixel_target, aruco_id
+                return x_aruco_center, y_aruco_center, aruco_id
             
             # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
             # On trace des lignes entourant l'Aruco marker
@@ -194,19 +196,15 @@ class Detection:
             cv2.line(image, (int(corners[0][0][2][0]), int(corners[0][0][2][1])), (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (0, 255, 0), 2)
             cv2.line(image, (int(corners[0][0][3][0]), int(corners[0][0][3][1])), (int(corners[0][0][0][0]), int(corners[0][0][0][1])), (0, 255, 0), 2)
             # On trace un point rouge au centre de l'Aruco
-            cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 4, (0, 255, 0), -1)
+            cv2.circle(image, (x_aruco_center, y_aruco_center), 4, (0, 255, 0), -1)
             # On écrit l'ID de l'aruco détecté au-dessus de l'aruco 
-            cv2.putText(image, str(aruco_id), (x_centerPixel_target, y_centerPixel_target-15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            cv2.putText(image, str(aruco_id), (x_aruco_center, y_aruco_center-15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             # On renvoie les coordronnées calculées, l'ID de l'aurco et l'image modifiée
-            return x_centerPixel_target, y_centerPixel_target, aruco_id, image
+            return x_aruco_center, y_aruco_center, aruco_id, image
  
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
-            # Si l'on ne souhaite pas récupérer l'image, on renvoie 3 variables vides 
-            if return_image == False:
-                return None, None, None
-            # Si l'on souhaite récupérer l'image, on renvoie 3 variables vides et l'image acquise
-            return None, None, None, image
+            return (None, None, None, image) if return_image == True else (None, None, None)
 
 
 
@@ -249,33 +247,28 @@ class Detection:
 
                 # Calcul du centre du carré
                 M = cv2.moments(c)
-                x_centerPixel_target = int(M["m10"] / M["m00"])
-                y_centerPixel_target = int(M["m01"] / M["m00"])
+                x_aruco_center = int(M["m10"] / M["m00"])
+                y_aruco_center = int(M["m01"] / M["m00"])
 
                 # On vérifie que le centre du carré est blanc
-                if mask_closing[y_centerPixel_target,x_centerPixel_target] == 255:
+                if mask_closing[y_aruco_center,x_aruco_center] == 255:
 
                     # Si on ne souhaite pas renvoyer l'image, on renvoie uniquement les coordonnées du centre du carré blanc détecté
                     if return_image == False:
-                        return x_centerPixel_target, y_centerPixel_target
+                        return x_aruco_center, y_aruco_center
                     
                     # Si l'on souhaite renvoyer l'image, on trace les éléments graphiques permettant de montrer que la détection a bien été réalisée
                     # On trace le contour détecté
                     cv2.drawContours(image, [c], 0, (0,255,0), 3)
                     # On trace un point rouge au centre du contour pour vérifier quel point est regardé
-                    cv2.circle(image, (x_centerPixel_target, y_centerPixel_target), 2, (0, 0, 255), -1)
+                    cv2.circle(image, (x_aruco_center, y_aruco_center), 2, (0, 0, 255), -1)
                     # On renvoie les coordronnées calculées et l'image modifiée
-                    return x_centerPixel_target, y_centerPixel_target, image, mask_closing
+                    return x_aruco_center, y_aruco_center, image, mask_closing
 
 
         # Si aucun carré blanc n'a pas été détecté, on renvoie des variables vides
         else:
-            #return (None, None, image, mask_closing) if return_image == True else (None, None)
-            # Si l'on ne souhaite pas récupérer l'image, on renvoie 2 variables vides 
-            if return_image == False:
-                return None, None
-            # Si l'on souhaite récupérer l'image, on renvoie 2 variables vides et l'image filtrée
-            return None, None, image, mask_closing
+            return (None, None, image, mask_closing) if return_image == True else (None, None)
 
 
 
