@@ -44,13 +44,13 @@ try:
         print(("Carré blanc détecté" if X != None else "Carré blanc non détecté") + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
         # Création du chemin des photos
         chemin_photo = (path + nom_dossier +                              # Chemin du dossier
-            datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
+            datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +           # Heure de prise de la photo  
             str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
             str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
             str('%.2f'%(drone.vehicle.rangefinder.distance)) + " " +      # Encodage de l'altitude
             ("yes" if X != None else "no") + ".jpg")                      # Indique si l'aruco a été detecté ou non
         chemin_photo_filtre = (path + nom_dossier +                       # Chemin du dossier
-            datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
+            datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +           # Heure de prise de la photo  
             str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
             str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
             str('%.2f'%(drone.vehicle.rangefinder.distance)) + " " +      # Encodage de l'altitude

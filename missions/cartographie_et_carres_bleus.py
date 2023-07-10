@@ -35,7 +35,6 @@ try:
         # Si le drone est à moins de 14 mètres d'altitude on ne prend pas de photo
         if drone.vehicle.rangefinder.distance <= 14:
             continue
-
         # Détection d'un aruco
         detection, image, _ = drone.camera.detection_carre_bleu()
         print("Carre bleu détecté" if detection == True else "Carre bleu non détecté")
@@ -48,8 +47,8 @@ try:
         cv2.imwrite("images_cartographie/"+nom_photo, image)        
         if detection == True:
            cv2.imwrite("carres_bleus/"+nom_photo, image)              
-        # Temporisation prenant en comtpe le temps de prise de la photo (environ 0.33 sec) pour avoir deux photos par secondes
-        sleep(0.15)
+        # Temporisation prenant en comtpe le temps de prise de la photo (environ 0.3 sec) pour avoir deux photos par secondes
+        sleep(0.2)
 
 # Interruption de la boucle par ctrl+C     
 except KeyboardInterrupt:

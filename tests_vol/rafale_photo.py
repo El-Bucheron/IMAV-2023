@@ -63,15 +63,15 @@ try:
             # Prise de la photo
             photo = drone.camera.prise_photo()
             # Création du chemin de la photo
-            chemin_photo = (path + nom_dossier +                                          # Chemin du dossier
-                            datetime.now().strftime("%H:%M:%S") + " " +                   # Heure de prise de la photo  
-                            str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-                            str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-                            str('%.2f'%(drone.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
+            chemin_photo = (path + nom_dossier +                              # Chemin du dossier
+                datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +           # Heure de prise de la photo  
+                str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+                str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+                str('%.2f'%(drone.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
             # Sauvegarde de la photo
             cv2.imwrite(chemin_photo, photo)
             # Temporisation
-            sleep(0.5)
+            sleep(0.2)
             print("Photo prise")
 
 # Arret du programme avec le Ctrl+C
