@@ -113,6 +113,7 @@ class Drone:
             time.sleep(1)
 
         print("Taking off!")
+        print(aTargetAltitude)
         self.vehicle.simple_takeoff(aTargetAltitude) # Take off to target altitude
 
         # Wait until the vehicle reaches a safe height before processing the goto (otherwise the command 
@@ -216,8 +217,8 @@ class Drone:
         vy = min(max(vy, -17.5), 17.5)
         
         #Envoie de la consigne de vitesse au drone
-        print("Consigne en vitesse : VX = " + vx + " ; VY = " + vy)
-        self.drone.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
+        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))
+        self.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
 
 
 
@@ -283,7 +284,7 @@ class Drone:
         else:
             #Choix de la vitesse verticale en fonction de l'altitude
             if altitudeAuSol < 3 :
-                vz = 0.1  # a changer pour descendre
+                vz = 0.2  # a changer pour descendre
             elif altitudeAuSol > 9 :
                 vz = 1  # a changer pour descendre
             elif altitudeAuSol > 5:
@@ -292,8 +293,8 @@ class Drone:
                 vz = 0.25
         
         #Envoie de la consigne de vitesse au drone
-        print("Consigne en vitesse : VX = " + vx + " ; VY = " + vy + " ; VZ = " + vz )
-        self.drone.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
+        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz) )
+        self.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
 
         
         

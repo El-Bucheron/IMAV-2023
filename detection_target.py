@@ -51,9 +51,11 @@ class Detection:
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
         
         # Calucl du centre de l'image après correction de l'image
-        self.x_imageCenter = int(self.ROI_camera_corrigee[1]/2)
+        self.x_imageCenter = int(self.ROI_camera_corrigee[2]/2)
         self.y_imageCenter = int(self.ROI_camera_corrigee[3]/2)
-        
+        print(self.x_imageCenter)
+        print(self.y_imageCenter)
+
         # Paramètres pour la détection d'aruco
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()

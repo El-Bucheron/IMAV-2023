@@ -21,6 +21,7 @@ sys.path.insert(0, package_path)
 # Imports
 from commande_drone import Drone
 from datetime import datetime
+from time import sleep
 import cv2
 
 # Chemins absolu du dossier contenant les dossiers de photos
@@ -50,8 +51,13 @@ drone = Drone()
 # Attente du mode "STABIIZE" puis du mode "STABILIZE"
 while drone.get_mode() != "STABILIZE":
     print("En attente du mode STABILIZE")
-while drone.get_mode() != "GUIDED":    
-    print("En attente du mode GUIDED")
+while drone.get_mode() != "AUTO":    
+    print("En attente du mode AUTO")
+drone.set_mode("GUIDED")
+while drone.get_mode() != "GUIDED":
+    pass
+drone.takeoff(15)
+sleep(2)
 
 try:
     print("Début de l'assservissement")
