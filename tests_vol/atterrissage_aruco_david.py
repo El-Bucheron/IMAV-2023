@@ -12,12 +12,7 @@ from time import sleep
 
 #Instanciation de l'objet drone
 drone = Drone()
-
-# Attente du mode "STABILIZE" puis du mode "Guided"
-while drone.get_mode() != "STABILIZE":
-    print("En attente du mode STABILIZE")
-while drone.get_mode() != "GUIDED":    
-    print("En attente du mode GUIDED")
+drone.attente_stabilize_auto()
     
 # Décollage du drone
 print("Décollage")

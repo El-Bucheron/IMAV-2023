@@ -19,6 +19,7 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
+import cv2
 from commande_drone import Drone
 from datetime import datetime
 from time import sleep
