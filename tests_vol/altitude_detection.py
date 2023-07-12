@@ -26,13 +26,9 @@ from dronekit import LocationGlobalRelative
 
 #Instanciation d'un objet "Drone" pour contrôler le drone 
 drone = Drone()
-# On attend que le drone soit en mode STABILIZE puis "GUIDED"
-while drone.get_mode() != "STABILIZE":
-    print("En attente du mode STABILIZE")
-while drone.get_mode() != "GUIDED":
-    print("En attente du mode GUIDED")
+drone.attente_stabilize_auto()
 # On fait s'envoler le drone à une atltitude de 5 mètres
-drone.arm_and_takeoff(5)
+drone.takeoff(5)
 # Temporisation d'une seconde 
 sleep(1)
 
@@ -46,15 +42,15 @@ try:
         # On fait aller le drone à ce point
         drone.goto(point, 0.1)
         # On récupre les coordonnées du centre de l'aruco
-        X, Y = drone.camera.detection_aruco()
+        X, _ = drone.camera.detection_aruco()
         # Si la valeur renvoyé n'est pas nulle, l'aruco a bien été détecté et on affiche l'altitude à laquelle il est détecté 
-        if X != None:
-            print("Aruco détecté à une altitude de " + drone.vehicle.rangefinder.distance + " mètres")
-        # Sinon l'aruco n'a pas été détecté et on affiche l'altitude de non détection
-        else:
-            print("Aruco non détecté à une altitude de " + drone.vehicle.rangefinder.distance + " mètres")
+        print("Aruco " + ("détecté" if X != None else "non détecté") + " à une altitude de " + drone.vehicle.rangefinder.distance + " mètres")
         # Temporisation d'une seconde 
         sleep(1)
+        
+    #Atterissage quand on a testé toutes les hauteurs souhaitées
+    print("Atterissage")
+    drone.set_mode("LAND")
         
 # On arrête l'ascencion du drone avec un Ctrl+C
 except KeyboardInterrupt:

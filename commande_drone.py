@@ -326,7 +326,7 @@ class Drone:
         
         
         
-    def atterrissage_aruco_matthieu(self, folderpath = ""):
+    def atterrissage_aruco_matthieu(self, chemin_dossier = ""):
         
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
@@ -343,45 +343,34 @@ class Drone:
                 self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
                 continue
                 
+                
             # Si le robot est entre 15 et 75 mètres du sol on cherche l'aruco par détection de carré blanc
             # On récupère ensuite le centre de l'aruco détecté selon X et Y (en pixel)
             elif altitude > 7.5:
                 print("Détection par carré blanc")
                 centre_aruco_X, centre_aruco_Y, image, image_filtree = self.camera.detection_carre_blanc(altitude, True)
                 
-                if folderpath != "":
-                    chemin_photo = (folderpath +                                     # Chemin du dossier
-                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +          # Heure de prise de la photo  
-                        str(self.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-                        str(self.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-                        str('%.2f'%(self.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
-                    chemin_photo_filtre = (folderpath +                                 # Chemin du dossier
-                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +             # Heure de prise de la photo  
-                        str(self.vehicle.location.global_relative_frame.lat) + "," +    # Encodage de la Latitude
-                        str(self.vehicle.location.global_relative_frame.lon) + "," +    # Encodage de la longitude
-                        str('%.2f'%(self.vehicle.rangefinder.distance)) + "filtre.jpg") # Encodage de l'altitude
+                if chemin_dossier != "":
+                    
                     # Traçage d'un cercle au centre de l'image
                     cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
                     # Sauvegarde de la photo
-                    cv2.imwrite(chemin_photo, image)
-                    cv2.imwrite(chemin_photo_filtre, image_filtree)
+                    enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
+                    enregistrement_photo_date_position(self, image_filtree, chemin_dossier, ("yes" if centre_aruco_X != None else "no") + " filtre")
 
-           
+                      
             # Si le robot est à moins de 5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre            
             else:
+                
                 print("Détection par aruco")
                 centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
 
-                if folderpath != "":
-                    chemin_photo = (folderpath +                                     # Chemin du dossier
-                        datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +          # Heure de prise de la photo  
-                        str(self.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-                        str(self.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-                        str('%.2f'%(self.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
+                if chemin_dossier != "":
                     # Traçage d'un cercle au centre de l'image
                     cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
                     # Sauvegarde de la photo
-                    cv2.imwrite(chemin_photo, image)
+                    enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
+
 
             # On asservit le drone avec pour consigne la position du centre l'aruco    
             print("Coordonnées trouvées : x = " + str(centre_aruco_X) + " ; y = " + str(centre_aruco_Y)) 
@@ -391,6 +380,8 @@ class Drone:
         # Une fois que le robot est assez bas, on le fait atterrir
         print("Atterrissage")
         self.set_mode("LAND")
+        
+        
         
         
   

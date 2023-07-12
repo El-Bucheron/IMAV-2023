@@ -22,32 +22,20 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-import cv2
+from utilities import creation_dossier_photo, enregistrement_photo_date_position
 from time import sleep
 from datetime import datetime
 from commande_drone import Drone
 
 
-# Chemins absolu du dossier contenant les dossiers de photos
-path = package_path + "/photos/"
-
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
 try:
-    nom_dossier = sys.argv[1] + "/"  
+    nom_dossier = sys.argv[1]  
 except IndexError:
-    nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S") + "/"
-
-# On crée le dossier de global photo s'il n'existe pas déjà
-try:
-    os.mkdir(path)
-except FileExistsError:
-    pass
-# On crée le dossier de photo lié à cet appel de code s'il n'existe pas déjà
-try:
-    os.mkdir(path + nom_dossier)
-except FileExistsError:
-    pass
+    nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S")
+# Création du dossier de photos
+chemin_dossier = creation_dossier_photo(nom_dossier)
     
     
 # Instanciation de objet "Drone" 
@@ -62,14 +50,8 @@ try:
         if(drone.vehicle.rangefinder.distance > 1):
             # Prise de la photo
             photo = drone.camera.prise_photo()
-            # Création du chemin de la photo
-            chemin_photo = (path + nom_dossier +                              # Chemin du dossier
-                datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +           # Heure de prise de la photo  
-                str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-                str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-                str('%.2f'%(drone.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
-            # Sauvegarde de la photo
-            cv2.imwrite(chemin_photo, photo)
+            # Enregistrement de la photo
+            enregistrement_photo_date_position(drone, photo, chemin_dossier)
             # Temporisation
             sleep(0.2)
             print("Photo prise")
