@@ -4,9 +4,13 @@
 Created on 2022
 @author: Thomas Pavot
 """
+
+import time
+import os
+import cv2
 from dronekit import LocationGlobalRelative
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
-import time
+from datetime import datetime
 
 R = 6371000 # Mean earth radius (meters)
 
@@ -80,6 +84,7 @@ def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, 
 
 
 
+
 # Décorateur permettant d'afficher le temps d'excécution d'une fonction 
 def get_excecution_time(function):
     def timer(*args, **kwargs):
@@ -94,3 +99,43 @@ def get_excecution_time(function):
         # revoi du résultat de la fonction appelée
         return result
     return timer 
+
+
+
+# Cette fonction crée un dossier de nom "foldername" dans le dossier "photos" dans le dossier "IMAV_2023" et renvoie le chemin du dossier crée
+# Elle ne fonctionne donc que si elle est appelée depuis une fonction située dans le dossier "IMAV_2023" ou un de ses sous-dossiers
+def creation_dossier_photo(foldername):
+
+    # Récupération du chemin du dossier "IMAV_2023"
+    package_path = os.getcwd()
+    while package_path[-9:] != "IMAV_2023":
+        package_path = os.path.dirname(package_path)
+
+    # Si le dossier "photos" n'existe pas on le crée
+    if "photos" not in os.listdir(package_path):
+        os.mkdir(os.path.join(package_path, "photos"))
+
+    # On vérifie que le dossier n'existe pas déjà et on le crée si ce n'est pas le cas
+    if foldername not in os.listdir(os.path.join(package_path, "photos")):
+        os.mkdir(os.path.join(package_path, "photos", foldername))
+
+    # Renvoi du chemin du dossier créé
+    return os.path.join(package_path, "photos", foldername)
+
+
+
+# Fonction permettant de sauvegarder une image "image" dans le dossier "folder_path" avec le format suivant :
+# HH:MM:SS.MSS lattitude,longitude,atlitude complement_nom_fichier.jpg
+# MSS représente les millisecondes de l'instant de l'enregistrement de la photo
+def enregistrement_photo_date_position(drone, image, folder_path, complement_nom_fichier = ""):
+
+    # Création du nom de la photo
+    nom_photo = (datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +  # Heure de prise de la photo  
+        str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
+        str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
+        str('%.2f'%(drone.vehicle.rangefinder.distance)))             # Encodage de l'altitude
+    # Ajout du complémet de nom et du format (.jpg) 
+    nom_photo += (" " + complement_nom_fichier + ".jpg") if complement_nom_fichier != "" else ".jpg"
+    
+    # Écriture de l'image
+    cv2.imwrite(os.path.join(folder_path, nom_photo), image)

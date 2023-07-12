@@ -5,9 +5,10 @@ Created on 2022
 
 @author: Thomas Pavot
 """
-import time
+
 import numpy as np
 import cv2
+from time import sleep
 from math import atan2, cos, sin, sqrt
 from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
 from pymavlink import mavutil
@@ -75,6 +76,30 @@ class Drone:
 # Fonctions de pilotage du drone
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
+    # Fonction demandant au drone de passer en mode "STABILIZE" puis en mode "AUTO" et enfin passe le drone en mode "GUIDED"
+    # Cette fonction est utilisée comme sécurité avant un code de pilotage de drone 
+    # Elle permet de passer à la suite du code en changement adéquatement de mode avec la télécommande
+    # Après avoir obtenu la bonne séquence de modes, elle passage également le drone en mode "GUIDED" pour contrôle le drone avec dronekit
+    def attente_stabilize_auto(self):
+
+        # Attente du mode "STABIIZE"
+        while self.get_mode() != "STABILIZE":
+            print("En attente du mode STABILIZE")
+            sleep(1)
+
+        # Attente du mode "AUTO"
+        while self.get_mode() != "AUTO":    
+            print("En attente du mode AUTO")
+            sleep(1)
+
+        # Passage en mode "GUIDED"    
+        self.set_mode("GUIDED")
+        # Attente du passage effectif en mode "GUIDED"
+        while self.get_mode() != "GUIDED":
+            pass
+
+
+
     # Fonction faisant décoler le drone à l'altitude passée en argument
     def takeoff(self, altitude):
         # Ordre de décollage du drone
@@ -83,6 +108,8 @@ class Drone:
         # car la fonction "simple_takeoff" ne bloque pas le déroulement du programme 
         while self.vehicle.rangefinder.distance < 0.95*altitude:
             pass
+
+
 
     def goto(self, targetLocation, distanceAccuracy):
         # Ordre de déplacement du drone
@@ -102,7 +129,7 @@ class Drone:
         # Don't let the user try to arm until autopilot is ready
         while not self.vehicle.is_armable:
             print(" Waiting for vehicle to initialise...")
-            time.sleep(1)
+            sleep(1)
         print("Arming motors")
         # Copter should arm in GUIDED mode
         self.vehicle.mode = VehicleMode("GUIDED")
@@ -110,7 +137,7 @@ class Drone:
 
         while not self.vehicle.armed:
             print(" Waiting for arming...")
-            time.sleep(1)
+            sleep(1)
 
         print("Taking off!")
         print(aTargetAltitude)
@@ -123,7 +150,7 @@ class Drone:
             if self.vehicle.location.global_relative_frame.alt>=aTargetAltitude*0.95: #Trigger just below target alt.
                 print("Reached target altitude")
                 break
-            time.sleep(1)
+            sleep(1)
                   
    
     # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant 0.1 seconde 
@@ -142,7 +169,7 @@ class Drone:
         # Envoie de la consigne de vitesse au drone 
         self.vehicle.send_mavlink(msg)
         # Temporisation de 0.1 seconde
-        time.sleep(0.1)
+        sleep(0.1)
 
                        
     def goto(self, targetLocation, distanceAccuracy):
@@ -167,7 +194,7 @@ class Drone:
             if remainingDistance <= distanceAccuracy:
                 print("[mission] Reached GPS target!")
                 break  # Then break the waiting loop
-            time.sleep(1)
+            sleep(1)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
 # Suivi de véhicule
