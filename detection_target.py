@@ -423,8 +423,8 @@ class Detection:
                     continue
                 peri = cv2.arcLength(contour, True)
                 approx = cv2.approxPolyDP(contour, 0.05 * peri, True)
-                cv2.drawContours(image, [contour], 0, (0, 0, 255), 3)
                 if len(approx) < 5:
+                    cv2.drawContours(image, [contour], 0, (0, 0, 255), 3)
                     return True, image, threshold
 
         return False, image, threshold 

@@ -55,13 +55,11 @@ try:
 
         # Détection d'un aruco
         detection, image, _ = drone.camera.detection_carre_bleu()
-        print("Carre bleu détecté" if detection == True else "Carre bleu non détecté")
+        print("Photo prise : " + ("Carre bleu détecté" if detection == True else "Carre bleu non détecté"))
         enregistrement_photo_date_position(drone, image, chemin_carto)
         if detection == True:
-            print("carré bleu detecté")
             enregistrement_photo_date_position(drone, image, chemin_carre_bleu)             
         # Temporisation prenant en comtpe le temps de prise de la photo (environ 0.3 sec) pour avoir deux photos par secondes
-        print("image prise")
         sleep(0.2)
 
 # Interruption de la boucle par ctrl+C     
