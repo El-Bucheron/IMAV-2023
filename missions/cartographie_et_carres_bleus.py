@@ -19,10 +19,25 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-import cv2
 from time import sleep
 from datetime import datetime
 from commande_drone import Drone
+from utilities import enregistrement_photo_date_position, creation_dossier_photo
+
+# On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
+# Sinon on utilse la date et l'heure d'appel du code pour le nommer  
+try:
+    nom_dossier = sys.argv[1]  
+except IndexError:
+    nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S")
+# Création du dossier de photos
+chemin_dossier = creation_dossier_photo(nom_dossier)
+
+chemin_carto = os.path.join(chemin_dossier, "cartographie")
+chemin_carre_bleu = os.path.join(chemin_dossier, "carre_bleu")
+os.mkdir(chemin_carto)
+os.mkdir(chemin_carre_bleu)
+
 
 # Import de l'objet drone
 drone = Drone()
@@ -37,20 +52,14 @@ try:
             print("drone trop bas")
             sleep(0.5)
             continue
+
         # Détection d'un aruco
         detection, image, _ = drone.camera.detection_carre_bleu()
         print("Carre bleu détecté" if detection == True else "Carre bleu non détecté")
-        # Création du chemin des photos
-        nom_photo = (datetime.now().strftime("%H:%M:%S.%f")[:-3] + " " +  # Heure de prise de la photo  
-            str(drone.vehicle.location.global_relative_frame.lat) + "," + # Encodage de la Latitude
-            str(drone.vehicle.location.global_relative_frame.lon) + "," + # Encodage de la longitude
-            str('%.2f'%(drone.vehicle.rangefinder.distance)) + ".jpg")    # Encodage de l'altitude
-        # Sauvegarde de la photo
-        cv2.imwrite("images_cartographie/"+nom_photo, image)        
-        print("image_cartographie/"+nom_photo)
+        enregistrement_photo_date_position(drone, image, chemin_carto)
         if detection == True:
             print("carré bleu detecté")
-            cv2.imwrite("carres_bleus/"+nom_photo, image)              
+            enregistrement_photo_date_position(drone, image, chemin_carre_bleu)             
         # Temporisation prenant en comtpe le temps de prise de la photo (environ 0.3 sec) pour avoir deux photos par secondes
         print("image prise")
         sleep(0.2)
