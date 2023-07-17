@@ -9,12 +9,11 @@ Created on 2022
 import numpy as np
 import cv2
 from time import sleep
-from math import atan2, cos, sin, sqrt
-from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
+from math import atan2, cos, sin, sqrt, tan, radians
+from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 from utilities import *
 from detection_target import Detection
-from datetime import datetime
 
 
 
@@ -30,10 +29,15 @@ class Drone:
     def __init__(self):     
         
         # Coefficients de l'asservissement PID de l'atterrissage
-        self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
-        self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
-        self.ki_atterrissage = 0.000001  # 0.0000001
-        
+        #self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
+        #self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
+        #self.ki_atterrissage = 0.000001  # 0.0000001
+
+    # Coefficients de l'asservissement PID de l'atterrissage pour l'erreur en METRES
+        self.kp_atterrissage = 0.05 # Coefficient mis à 0 car initialisé plus tard
+        self.kd_atterrissage = 0.001  # 0.00001 working "fine" for both
+        self.ki_atterrissage = 0.00001  # 0.0000001
+
         # Coefficients de l'asservissement PID du suivi de véhicule
         self.kp_suivi_vehicule = 0.005 
         self.kd_suivi_vehicule = 0.0001  # 0.00001 working "fine" for both
@@ -254,7 +258,7 @@ class Drone:
 # Atterissage Aruco
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
-    # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
+    # Fonction prenant en entrée les coordonnées en x et y, en pixels, de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
     def asservissement_atterrissage(self, aruco_center_x, aruco_center_y):
 
@@ -264,13 +268,17 @@ class Drone:
             return
 
         # Récupération de l'altitude du drone
-        altitudeAuSol = self.vehicle.rangefinder.distance        
+        altitude = self.vehicle.rangefinder.distance        
         # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        self.kp_atterrissage = 0.003 if altitudeAuSol < 5 else 0.005
+        # self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y
+        #erreurX = self.camera.x_imageCenter - aruco_center_x
+        #erreurY = self.camera.y_imageCenter - aruco_center_y
+        # Distance en mètres entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
+        erreurX = (self.camera.x_imageCenter - aruco_center_x)/(self.camera.x_imageCenter) * altitude * tan(radians(self.camera.horizontal_field_view/2)) 
+        erreurY = (self.camera.y_imageCenter - aruco_center_y)/(self.camera.y_imageCenter) * altitude * tan(radians(self.camera.vertical_field_view/2))
+        print("Erreur en mètres : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -278,10 +286,10 @@ class Drone:
         alpha = dist_angle + self.vehicle.attitude.yaw
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
-        # Si l'erreur selon x et y est inférieure à 10 pixel, on la considère comme nulle
-        if abs(erreurX) <= 10:  
+        # Si l'erreur selon x et y est inférieure à 25 cm, on la considère comme nulle
+        if abs(erreurX) <= 0.25: #10:  
             erreurX = 0
-        if abs(erreurY) <= 10:
+        if abs(erreurY) <= 0.25: #10:
             erreurY = 0
 
         # Calcul des erreurs intégrale et dérivée
@@ -303,24 +311,24 @@ class Drone:
         vy = min(max(vy, -5.0), 5.0)
         
         # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
-        dist_center_threshold = 50 if altitudeAuSol < 2 else 1000        
-        # Si le drone n'est pas assez proche, il reste dans le même plan
-        if dist_center > dist_center_threshold :
-            vz = 0
-        # Si le drone est assez proche, on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
+        #dist_center_threshold = 50 if altitude < 2 else 1000        
+        # Si n'est dans un rayon d'un mètre autour du drone, il ne change pas son altitude 
+        #if dist_center > dist_center_threshold :
+        #    vz = 0
+        # Sinon on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
+        #else:
+        #Choix de la vitesse verticale en fonction de l'altitude
+        if altitude > 9:
+            vz = 1.5 #1
+        elif altitude > 5:
+            vz = 1 #0.5
+        elif altitude > 3:
+            vz = 0.5 #0.25
         else:
-            #Choix de la vitesse verticale en fonction de l'altitude
-            if altitudeAuSol < 3 :
-                vz = 0.2  # a changer pour descendre
-            elif altitudeAuSol > 9 :
-                vz = 1  # a changer pour descendre
-            elif altitudeAuSol > 5:
-                vz = 0.5
-            else:
-                vz = 0.25
+            vz = 0.4 #0.2
         
         #Envoie de la consigne de vitesse au drone
-        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz) )
+        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
         self.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
 
         
@@ -397,26 +405,27 @@ class Drone:
                 altitude = self.vehicle.rangefinder.distance
                 
         # Détection du centre de l'aruco
-        centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
+        centre_aruco_X, centre_aruco_Y, _ = self.camera.detection_aruco()
         
         # Calcul des coordonnées GPS de l'arucco
-        centre_aruco_lat = self.vehicle.location.global_frame.lat + centre_aruco_X / 111111.0
-        centre_aruco_lon = self.vehicle.location.global_frame.lon + centre_aruco_Y / (111111.0 * np.cos(np.radians(self.vehicle.location.global_frame.lat)))
+        #centre_aruco_lat = self.vehicle.location.global_frame.lat + centre_aruco_X / 111111.0
+        #centre_aruco_lon = self.vehicle.location.global_frame.lon + centre_aruco_Y / (111111.0 * np.cos(np.radians(self.vehicle.location.global_frame.lat)))
         
         # Estimating marker location from vision
-        #distance_vision, angle_vision = get_distance_angle_picture(self.camera.x_imageCenter, self.camera.y_imageCenter,
-                                                                 #centre_aruco_X, centre_aruco_Y,
-                                                                 #self.vehicle.rangefinder.distance, self.camera.dist_coeff_x, self.camera.dist_coeff_y)
-        #current_location = LocationGlobalRelative(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, 0)
-        #estimated_location = get_GPS_location(current_location, self.vehicle.attitude.yaw + angle_vision, distance_vision)
-        #self.vehicle.simple_goto(estimated_location)
+        distance_vision, angle_vision = get_distance_angle_picture(self.camera.x_imageCenter, self.camera.y_imageCenter,
+                                                                 centre_aruco_X, centre_aruco_Y,
+                                                                 self.vehicle.rangefinder.distance, self.camera.dist_coeff_x, self.camera.dist_coeff_y)
+        current_location = LocationGlobalRelative(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, 0)
+        estimated_location = get_GPS_location(current_location, self.vehicle.attitude.yaw + angle_vision, distance_vision)
+        print("Déplacement jusqu'à la position de l'aruco")
+        self.vehicle.goto(estimated_location, 0.25)
         
-        print("Latitude de l'aruco : " + str(centre_aruco_lat) + " ; Longitude de l'aruco : " + str(centre_aruco_lon))
+        #print("Latitude de l'aruco : " + str(centre_aruco_lat) + " ; Longitude de l'aruco : " + str(centre_aruco_lon))
         
         # Déplacement du drone jusqu'à la position de l'aruco
-        print("Déplacement jusqu'à la position de l'aruco")
-        target_location = LocationGlobalRelative(centre_aruco_lat, centre_aruco_lon, self.vehicle.rangefinder.distance)
-        self.vehicle.simple_goto(target_location)
+        #print("Déplacement jusqu'à la position de l'aruco")
+        #target_location = LocationGlobalRelative(centre_aruco_lat, centre_aruco_lon, self.vehicle.rangefinder.distance)
+        #self.vehicle.simple_goto(target_location)
         
         # Envoi de la commande d'atterissage
         print("Atterissage sur aruco")
@@ -424,8 +433,8 @@ class Drone:
             0,          # time_boot_ms (non utilisé)
             0,          # target num
             0,          # frame
-            centre_aruco_lat, # X 
-            centre_aruco_lon, # Y 
+            estimated_location.lat, # X 
+            estimated_location.lon, # Y 
             0,          # altitude. Not supported.
             0,0         # size of target in radians
         )

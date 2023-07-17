@@ -22,21 +22,21 @@ class Detection:
         #--------------- Resolution ---------------------------
         # Focal length and sensors dimensions for Pi camera
         # See: https://www.raspberrypi.com/documentation/accessories/camera.html 
-        focal_length = 3.60   # Focal length [mm]
-        self.horizotal_res = 640   # Horizontal resolution (x dimension) [px] 
+        self.horizontal_res = 640   # Horizontal resolution (x dimension) [px] 
         self.vertical_res = 480    # Vertical resolution (y dimension) [px]
+        focal_length = 3.60   # Focal length [mm]
         sensor_length = 3.76  # Sensor length (x dimension) [mm]
         sensor_height = 2.74  # Sensor length (y dimension) [mm]  
-        self.dist_coeff_x = sensor_length/(focal_length*self.horizotal_res)
+        self.horizontal_field_view = 62.2 # [°] Angle horizontal du champ de vision de la caméra
+        self.vertical_field_view = 18.8 # [°] Angle vertical du champ de vision de la caméra
+        self.dist_coeff_x = sensor_length/(focal_length*self.horizontal_res)
         self.dist_coeff_y = sensor_height/(focal_length*self.vertical_res)
-        #self.x_imageCenter = int(self.horizotal_res/2)
-        #self.y_imageCenter = int(self.vertical_res/2)  
 
         # Intialisation de la picamera
         self.camera = PiCamera()
-        self.camera.resolution = (self.horizotal_res, self.vertical_res)
+        self.camera.resolution = (self.horizontal_res, self.vertical_res)
         self.camera.framerate = 30
-        self.rawCapture = PiRGBArray(self.camera, size=(self.horizotal_res, self.vertical_res))
+        self.rawCapture = PiRGBArray(self.camera, size=(self.horizontal_res, self.vertical_res))
 
         # Récupération du chemin d'accès global
         self.package_path = os.getcwd()
@@ -45,14 +45,16 @@ class Detection:
         sys.path.insert(0, self.package_path)
 
         # Camera calibration path
-        calib_camera_path = self.package_path + "/config/camera/" + str(self.horizotal_res) + "x" + str(self.vertical_res) + "/"
+        calib_camera_path = self.package_path + "/config/camera/" + str(self.horizontal_res) + "x" + str(self.vertical_res) + "/"
         self.camera_matrix = np.loadtxt(calib_camera_path+'cameraMatrix.txt', delimiter=',')
         self.camera_distortion = np.loadtxt(calib_camera_path+'cameraDistortion.txt', delimiter=',')
         self.matrice_camera_corrigee, self.ROI_camera_corrigee = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.camera_distortion, self.camera.resolution, 1, self.camera.resolution)
         
         # Calucl du centre de l'image après correction de l'image
-        self.x_imageCenter = int(self.ROI_camera_corrigee[2]/2)
-        self.y_imageCenter = int(self.ROI_camera_corrigee[3]/2)
+        self.horizontal_res_corrigee = self.ROI_camera_corrigee[2]-self.ROI_camera_corrigee[0]
+        self.vertical_res_corrigee = self.ROI_camera_corrigee[3]-self.ROI_camera_corrigee[1]
+        self.x_imageCenter = int(self.horizontal_res_corrigee/2)
+        self.y_imageCenter = int(self.vertical_res_corrigee/2)
         print(self.x_imageCenter)
         print(self.y_imageCenter)
 
@@ -76,11 +78,11 @@ class Detection:
     # Fonction permettant de prendre une photo avec la camera
     # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
     def prise_photo(self):
-        photo = np.empty((self.vertical_res * self.horizotal_res * 3), dtype=np.uint8)
+        photo = np.empty((self.vertical_res * self.horizontal_res * 3), dtype=np.uint8)
         # Prise de la photo
         self.camera.capture(photo, 'bgr')
         # Remaniage de la forme de la photo pour pouvoir la corrigée
-        photo = photo.reshape((self.vertical_res, self.horizotal_res, 3))
+        photo = photo.reshape((self.vertical_res, self.horizontal_res, 3))
         # Correction de la photo avec les matrices de correction
         photo_corrigee = cv2.undistort(photo, self.camera_matrix, self.camera_distortion, None, self.matrice_camera_corrigee)
         # Rognage de la matrice pour ne garder que la partie corrigée
