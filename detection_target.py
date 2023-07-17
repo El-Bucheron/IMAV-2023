@@ -55,8 +55,6 @@ class Detection:
         self.vertical_res_corrigee = self.ROI_camera_corrigee[3]-self.ROI_camera_corrigee[1]
         self.x_imageCenter = int(self.horizontal_res_corrigee/2)
         self.y_imageCenter = int(self.vertical_res_corrigee/2)
-        print(self.x_imageCenter)
-        print(self.y_imageCenter)
 
         # Paramètres pour la détection d'aruco
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)

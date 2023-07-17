@@ -270,7 +270,7 @@ class Drone:
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance        
         # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        # self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
+        #self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         #erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -406,11 +406,7 @@ class Drone:
                 
         # Détection du centre de l'aruco
         centre_aruco_X, centre_aruco_Y, _ = self.camera.detection_aruco()
-        
-        # Calcul des coordonnées GPS de l'arucco
-        #centre_aruco_lat = self.vehicle.location.global_frame.lat + centre_aruco_X / 111111.0
-        #centre_aruco_lon = self.vehicle.location.global_frame.lon + centre_aruco_Y / (111111.0 * np.cos(np.radians(self.vehicle.location.global_frame.lat)))
-        
+            
         # Estimating marker location from vision
         distance_vision, angle_vision = get_distance_angle_picture(self.camera.x_imageCenter, self.camera.y_imageCenter,
                                                                  centre_aruco_X, centre_aruco_Y,
@@ -419,14 +415,7 @@ class Drone:
         estimated_location = get_GPS_location(current_location, self.vehicle.attitude.yaw + angle_vision, distance_vision)
         print("Déplacement jusqu'à la position de l'aruco")
         self.vehicle.goto(estimated_location, 0.25)
-        
-        #print("Latitude de l'aruco : " + str(centre_aruco_lat) + " ; Longitude de l'aruco : " + str(centre_aruco_lon))
-        
-        # Déplacement du drone jusqu'à la position de l'aruco
-        #print("Déplacement jusqu'à la position de l'aruco")
-        #target_location = LocationGlobalRelative(centre_aruco_lat, centre_aruco_lon, self.vehicle.rangefinder.distance)
-        #self.vehicle.simple_goto(target_location)
-        
+
         # Envoi de la commande d'atterissage
         print("Atterissage sur aruco")
         msg = self.vehicle.message_factory.landing_target_encode(
@@ -439,4 +428,5 @@ class Drone:
             0,0         # size of target in radians
         )
         self.vehicle.send_mavlink(msg)
+        #self.set_mode("LAND")
         self.vehicle.flush()
