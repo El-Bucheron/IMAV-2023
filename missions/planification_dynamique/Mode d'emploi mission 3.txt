@@ -1,0 +1,18 @@
+1. Entrer les coordonnées GPS dans Mission Planner , colonne 7 : latitude, colonne 8 : longitude
+
+2. Enregistrer la mission, l'écrire et lancer la mission
+
+3. Une fois la mission terminée , récupérer les données du drones :
+	- Aller dans l'onglet Data > Dataflashlog > Download DataFlashLoag via MavLink
+	- Une nouvelle fenêtre s'ouvre, sélectionner la mission réalisée
+	- Cliquer sur le bouton "Charger ces journaux"
+
+4.Ouvrir l'onglet "Reviw Log", sélectionner le journal précédemment télécharger. 
+
+5.Cliquer droit sur la première ligne et sélectionner "GPS", puis cliquer sur "Filtrer"
+
+6.Cliquer droit sur la première ligne, puis cliquer sur 'Export Visible" , renommer le fichier sous la forme "nom_de_la_mission.csv"
+
+7. Lancer le code python contenu dans le dossier, entrer le nom du fichier et le nom du fichier de sortie
+
+8. Mission terminée, Attention, ce message s'auto-détruira
