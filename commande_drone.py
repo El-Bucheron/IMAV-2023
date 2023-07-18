@@ -201,17 +201,18 @@ class Drone:
             sleep(1)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
-# Suivi de véhicule
+# Asservissements
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
-    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):
+    def asservissement_suivi_vehicule_fonctionnel(self, aruco_center_x, aruco_center_y):
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
             print("Consigne nulle")
-            return
+            #self.set_velocity(0, 0, 0)
+            return None, None, None, None
         
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -250,23 +251,20 @@ class Drone:
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))
         self.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
+        return erreurX, erreurY, vx, vy
 
 
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-# Atterissage Aruco
-# ------------------------------------------------------------------------------------------------------------------------------------------
 
     # Fonction prenant en entrée les coordonnées en x et y, en pixels, de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
-    def asservissement_atterrissage_2022(self, aruco_center_x, aruco_center_y):
+    def asservissement_atterrissage_fonctionnel(self, aruco_center_x, aruco_center_y):
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
             print("Consigne nulle")
             #self.set_velocity(0, 0, 0)
-            return None, None, 0, 0
+            return None, None, None, None
 
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance        
@@ -276,7 +274,7 @@ class Drone:
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
         erreurY = self.camera.y_imageCenter - aruco_center_y
-        print("Erreur en mètres : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+        print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -332,26 +330,24 @@ class Drone:
 
 
 
-    # Fonction prenant en entrée les coordonnées en x et y, en pixels, de l'aruco détecté par la cameré 
+
+
+    # Fonction prenant en entrée les coordonnées en x et y, en METRES, de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
     def asservissement_atterrissage_metres(self, aruco_center_x, aruco_center_y):
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
             print("Consigne nulle")
-            return
+            self.set_velocity(0, 0, 0)
+            return None, None, None, None
 
         # Récupération de l'altitude du drone
-        altitude = self.vehicle.rangefinder.distance        
-        # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
+        altitude = self.vehicle.rangefinder.distance
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y
-        # Distance en mètres entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        #erreurX = (self.camera.x_imageCenter - aruco_center_x)/(self.camera.x_imageCenter) * altitude * tan(radians(self.camera.horizontal_field_view/2)) 
-        #erreurY = (self.camera.y_imageCenter - aruco_center_y)/(self.camera.y_imageCenter) * altitude * tan(radians(self.camera.vertical_field_view/2))
+        erreurX = (self.camera.x_imageCenter - aruco_center_x)/(self.camera.x_imageCenter) * altitude * tan(radians(self.camera.horizontal_field_view/2)) 
+        erreurY = (self.camera.y_imageCenter - aruco_center_y)/(self.camera.y_imageCenter) * altitude * tan(radians(self.camera.vertical_field_view/2))
         print("Erreur en mètres : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
@@ -361,9 +357,9 @@ class Drone:
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
         # Si l'erreur selon x et y est inférieure à 25 cm, on la considère comme nulle
-        if abs(erreurX) <= 10:  
+        if abs(erreurX) <= 0.25:  
             erreurX = 0
-        if abs(erreurY) <= 10:
+        if abs(erreurY) <= 0.25:
             erreurY = 0
 
         # Calcul des erreurs intégrale et dérivée
@@ -384,31 +380,84 @@ class Drone:
         vx = -min(max(vx, -5.0), 5.0)
         vy = min(max(vy, -5.0), 5.0)
         
-        # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
-        dist_center_threshold = 50 if altitude < 2 else 1000        
-        # Si n'est dans un rayon d'un mètre autour du drone, il ne change pas son altitude 
-        if dist_center > dist_center_threshold :
-            vz = 0
-        # Sinon on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
+        # Détermination de la vitesse verticale
+        if altitude > 9:
+            vz = 1.5
+        elif altitude > 5:
+            vz = 1
+        elif altitude > 3:
+            vz = 0.5
         else:
-        #Choix de la vitesse verticale en fonction de l'altitude
-            if altitude > 9:
-                vz = 1.5 #1
-            elif altitude > 5:
-                vz = 1 #0.5
-            elif altitude > 3:
-                vz = 0.5 #0.25
-            else:
-                vz = 0
-        
+            vz = 0
+    
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
-        self.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'        
+        self.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North' 
+        return erreurX, erreurY, vx, vy       
+
+
+
+
+    # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
+    # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
+    def asservissement_suivi_vehicule_inclinaison(self, aruco_center_x, aruco_center_y):
+
+        # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
+        if aruco_center_x == None:
+            print("Consigne nulle")
+            self.set_velocity(0, 0, 0)
+            return None, None, None, None
+        
+        # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
+        erreurX = self.camera.x_imageCenter - aruco_center_x
+        erreurY = self.camera.y_imageCenter - aruco_center_y
+        # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
+        dist_center = sqrt(erreurX**2+erreurY**2)
+        dist_angle = atan2(erreurY, erreurX)
+        # Rotation de la base pour correspondre au repère du drone
+        alpha = dist_angle + self.vehicle.attitude.yaw
+        erreurX = dist_center * cos(alpha)
+        erreurY = dist_center * sin(alpha)
+        # Si l'erreur selon x et y est inférieure à 10 pixels, on la considère comme nulle
+        if abs(erreurX) <= 10:  
+            erreurX = 0
+        if abs(erreurY) <= 10:
+            erreurY = 0
+
+        # Calcul des erreurs intégrale et dérivée
+        # Erreur dérivée 
+        erreurDeriveeX = (erreurX - self.erreurAnterieureX_suivi_vehicule)
+        erreurDeriveeY = (erreurY - self.erreurAnterieureY_suivi_vehicule)
+        # Erreur intégrale
+        self.erreurIntegraleX_suivi_vehicule += erreurX
+        self.erreurIntegraleY_suivi_vehicule += erreurY
+        # Stockage des erreurs en X et Y pour le future calcul de l'erreur dérivée 
+        self.erreurAnterieureX_suivi_vehicule = erreurX
+        self.erreurAnterieureY_suivi_vehicule = erreurY
+
+        # Calcul de la vitesse corrigée 
+        vx = self.kp_suivi_vehicule * erreurX + self.kd_suivi_vehicule * erreurDeriveeX + self.ki_suivi_vehicule * self.erreurIntegraleX_suivi_vehicule
+        vy = self.kp_suivi_vehicule * erreurY + self.kd_suivi_vehicule * erreurDeriveeY + self.ki_suivi_vehicule * self.erreurIntegraleY_suivi_vehicule        
+        
+        # Correction en fonction de l'angle 
+        vx *= cos(self.vehicle.attitude.roll)
+        vy *= cos(self.vehicle.attitude.pitch)
+
+        # Bornage des vitesses à +/- 17.5 m/s
+        vx = -min(max(vx, -17.5), 17.5)
+        vy = min(max(vy, -17.5), 17.5)
+        
+        #Envoie de la consigne de vitesse au drone
+        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))
+        self.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
+        return erreurX, erreurY, vx, vy          
 
         
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Atterissage Aruco
+# ------------------------------------------------------------------------------------------------------------------------------------------
         
-        
-    def atterrissage_aruco_matthieu(self, chemin_dossier):
+    def atterrissage_aruco_fonctionnel(self, chemin_dossier):
         
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
@@ -432,11 +481,14 @@ class Drone:
                 
                 print("Détection par carré blanc")
                 centre_aruco_X, centre_aruco_Y, image, image_filtree = self.camera.detection_carre_blanc(altitude, True)
-                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_2022(centre_aruco_X, centre_aruco_Y)
-                message_image = "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + "\nVitesse : Vx = " + str(vx) + " ; Vy = " + str(vy)
-                cv2.putText(image, message_image, (0, 0), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                # Asservissement par rapport au centre de l'aruco
+                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y)
+                # Affichage de l'erreur et de la vitesse
+                image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)                
                 # Traçage d'un cercle au centre de l'image
                 cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                #tracage_nord_est(self, image)
                 # Sauvegarde de la photo
                 enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
                 enregistrement_photo_date_position(self, image_filtree, chemin_dossier, ("yes" if centre_aruco_X != None else "no") + " filtre")
@@ -447,11 +499,14 @@ class Drone:
                 
                 print("Détection par aruco")
                 centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
-                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_2022(centre_aruco_X, centre_aruco_Y)
-                message_image = "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + "\nVitesse : Vx = " + str(vx) + " ; Vy = " + str(vy)
-                cv2.putText(image, message_image, (0, 0), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                # Asservissement par rapport au centre de l'aruco
+                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y)
+                # Affichage de l'erreur et de la vitesse
+                image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
                 # Traçage d'un cercle au centre de l'image
                 cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                #tracage_nord_est(self, image)
                 # Sauvegarde de la photo
                 enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
             

@@ -19,6 +19,7 @@ print("Début de programme")
 try:
     while drone.vehicle.rangefinder.distance > 6 and drone.get_mode != "LOITER":
         print("En attente du mode LOITER pour atterrir")
+        sleep(1)
 
     # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
     # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
@@ -30,7 +31,7 @@ try:
     chemin_dossier = creation_dossier_photo(nom_dossier)
 
     print("Début de la manoeuvre d'atterissage")
-    drone.atterrissage_aruco_matthieu(chemin_dossier)  
+    drone.atterrissage_aruco_fonctionnel(chemin_dossier)  
 
 except KeyboardInterrupt:
     print("Fin de programme")

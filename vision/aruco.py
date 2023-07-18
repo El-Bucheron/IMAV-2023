@@ -8,6 +8,7 @@ sys.path.insert(0, package_path)
 
 # Imports
 import cv2
+from math import cos, sin, pi
 from time import sleep
 from datetime import datetime
 from commande_drone import Drone
@@ -32,7 +33,8 @@ try:
         # Détection d'un aruco
         centre_aruco_X, centre_aruco_Y, aruco_id, image = drone.camera.detection_aruco(True)
         print(("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")+ " with id " + str(aruco_id) + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
-        erreurX, erreurY, vx, vy = drone.asservissement_atterrissage_2022(centre_aruco_X, centre_aruco_Y)
+        erreurX, erreurY, vx, vy = drone.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y)
+        # Affichage de l'erreur et de la vitesse
         image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
         image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
         # Traçage d'un cercle au centre de l'image

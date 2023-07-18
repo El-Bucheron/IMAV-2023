@@ -22,7 +22,7 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-from utilities import creation_dossier_photo, enregistrement_photo_date_position
+from utilities import creation_dossier_photo, enregistrement_photo_date_position, tracage_nord_est
 from time import sleep
 from datetime import datetime
 from commande_drone import Drone
@@ -50,6 +50,7 @@ try:
         if(drone.vehicle.rangefinder.distance > 1):
             # Prise de la photo
             photo = drone.camera.prise_photo()
+            tracage_nord_est(drone, photo)
             # Enregistrement de la photo
             enregistrement_photo_date_position(drone, photo, chemin_dossier)
             # Temporisation

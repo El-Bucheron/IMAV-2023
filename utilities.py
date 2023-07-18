@@ -9,7 +9,7 @@ import time
 import os
 import cv2
 from dronekit import LocationGlobalRelative
-from math import asin, atan2, cos, degrees, radians, sin, sqrt
+from math import asin, atan2, cos, degrees, radians, sin, sqrt, pi
 from datetime import datetime
 
 R = 6371000 # Mean earth radius (meters)
@@ -139,3 +139,14 @@ def enregistrement_photo_date_position(drone, image, folder_path, complement_nom
     
     # Écriture de l'image
     cv2.imwrite(os.path.join(folder_path, nom_photo), image)
+
+
+def tracage_nord_est(drone, image):
+    cv2.line(image, 
+            (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
+            (int((drone.camera.x_imageCenter+50)*cos(drone.vehicle.attitude.yaw+pi/2)), int((drone.camera.y_imageCenter)*sin(drone.vehicle.attitude.yaw+pi/2))), 
+            (0, 0, 0), 2)
+    cv2.line(image, 
+            (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
+            (int((drone.camera.x_imageCenter)*-sin(drone.vehicle.attitude.yaw+pi/2)), int((drone.camera.y_imageCenter-50)*cos(drone.vehicle.attitude.yaw+pi/2))), 
+            (0, 0, 255), 2)
