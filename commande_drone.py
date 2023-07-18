@@ -29,19 +29,19 @@ class Drone:
     def __init__(self):     
         
         # Coefficients de l'asservissement PID de l'atterrissage
-        #self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
-        #self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
-        #self.ki_atterrissage = 0.000001  # 0.0000001
+        self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
+        self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
+        self.ki_atterrissage = 0.000001  # 0.0000001
 
     # Coefficients de l'asservissement PID de l'atterrissage pour l'erreur en METRES
-        self.kp_atterrissage = 0.05 # Coefficient mis à 0 car initialisé plus tard
-        self.kd_atterrissage = 0.001  # 0.00001 working "fine" for both
-        self.ki_atterrissage = 0.00001  # 0.0000001
+        #self.kp_atterrissage = 1 # Coefficient mis à 0 car initialisé plus tard
+        #self.kd_atterrissage = 0.001  # 0.00001 working "fine" for both
+        #self.ki_atterrissage = 0.00001  # 0.0000001
 
         # Coefficients de l'asservissement PID du suivi de véhicule
-        self.kp_suivi_vehicule = 0.005 
-        self.kd_suivi_vehicule = 0.0001  # 0.00001 working "fine" for both
-        self.ki_suivi_vehicule = 0.000001  # 0.0000001
+        self.kp_suivi_vehicule = 0.025
+        self.kd_suivi_vehicule = 0.00025  # 0.00001 working "fine" for both
+        self.ki_suivi_vehicule = 0.000002  # 0.0000001
 
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
         self.erreurIntegraleX_atterrissage = 0
@@ -270,14 +270,14 @@ class Drone:
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance        
         # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        #self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
+        self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        #erreurX = self.camera.x_imageCenter - aruco_center_x
-        #erreurY = self.camera.y_imageCenter - aruco_center_y
+        erreurX = self.camera.x_imageCenter - aruco_center_x
+        erreurY = self.camera.y_imageCenter - aruco_center_y
         # Distance en mètres entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = (self.camera.x_imageCenter - aruco_center_x)/(self.camera.x_imageCenter) * altitude * tan(radians(self.camera.horizontal_field_view/2)) 
-        erreurY = (self.camera.y_imageCenter - aruco_center_y)/(self.camera.y_imageCenter) * altitude * tan(radians(self.camera.vertical_field_view/2))
+        #erreurX = (self.camera.x_imageCenter - aruco_center_x)/(self.camera.x_imageCenter) * altitude * tan(radians(self.camera.horizontal_field_view/2)) 
+        #erreurY = (self.camera.y_imageCenter - aruco_center_y)/(self.camera.y_imageCenter) * altitude * tan(radians(self.camera.vertical_field_view/2))
         print("Erreur en mètres : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
@@ -287,9 +287,9 @@ class Drone:
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
         # Si l'erreur selon x et y est inférieure à 25 cm, on la considère comme nulle
-        if abs(erreurX) <= 0.25: #10:  
+        if abs(erreurX) <= 10:  
             erreurX = 0
-        if abs(erreurY) <= 0.25: #10:
+        if abs(erreurY) <= 10:
             erreurY = 0
 
         # Calcul des erreurs intégrale et dérivée
@@ -311,21 +311,21 @@ class Drone:
         vy = min(max(vy, -5.0), 5.0)
         
         # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
-        #dist_center_threshold = 50 if altitude < 2 else 1000        
+        dist_center_threshold = 50 if altitude < 2 else 1000        
         # Si n'est dans un rayon d'un mètre autour du drone, il ne change pas son altitude 
-        #if dist_center > dist_center_threshold :
-        #    vz = 0
+        if dist_center > dist_center_threshold :
+            vz = 0
         # Sinon on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
-        #else:
-        #Choix de la vitesse verticale en fonction de l'altitude
-        if altitude > 9:
-            vz = 1.5 #1
-        elif altitude > 5:
-            vz = 1 #0.5
-        elif altitude > 3:
-            vz = 0.5 #0.25
         else:
-            vz = 0.4 #0.2
+        #Choix de la vitesse verticale en fonction de l'altitude
+            if altitude > 9:
+                vz = 1.5 #1
+            elif altitude > 5:
+                vz = 1 #0.5
+            elif altitude > 3:
+                vz = 0.5 #0.25
+            else:
+                vz = 0
         
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))

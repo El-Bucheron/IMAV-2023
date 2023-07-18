@@ -28,7 +28,7 @@ drone.attente_stabilize_auto()
     
 # Décollage du drone
 print("Décollage")
-drone.arm_and_takeoff(20)
+drone.arm_and_takeoff(10)
 sleep(2)
 
 
