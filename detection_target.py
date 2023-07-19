@@ -68,7 +68,7 @@ class Detection:
         self.closing_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
 
         # On définit la gamme de couleur de bleu que l'on souhaite
-        self.lower_bound_filtre_bleu = np.array([105, 105, 25])
+        self.lower_bound_filtre_bleu = np.array([90, 90, 25])
         self.upper_bound_filtre_bleu = np.array([160, 255, 200])  
 
 
