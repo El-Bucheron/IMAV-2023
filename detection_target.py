@@ -130,9 +130,9 @@ class Detection:
             #Mannequin rouge
 
             petite_seuil_min_rouge = 0 
-            petite_seuil_max_rouge = 600
-            moyenne_seuil_min_rouge = 600
-            moyenne_seuil_max_rouge= 1000
+            petite_seuil_max_rouge = 1000
+            moyenne_seuil_min_rouge = 1000
+            moyenne_seuil_max_rouge= 1500
             
         elif altitude == 20:
                 
@@ -225,9 +225,9 @@ class Detection:
             if area > taille_min_forme:
                 # Catégoriser l'aire en debout, assis et allongé en fonction des seuils de taille
                 if petite_seuil_min_bleu < area < petite_seuil_max_bleu:
-                    category = 'sit'
-                elif moyenne_seuil_min_bleu < area < moyenne_seuil_max_bleu:
                     category = 'stand'
+                elif moyenne_seuil_min_bleu < area < moyenne_seuil_max_bleu:
+                    category = 'sit'
                 else:
                     category = 'lie'
 
@@ -249,9 +249,9 @@ class Detection:
             if area > taille_min_forme:
                 # Catégoriser l'aire en debout, assis et allongé en fonction des seuils de taille
                 if petite_seuil_min_rouge < area < petite_seuil_max_rouge:
-                    category = 'sit'
-                elif moyenne_seuil_min_rouge < area < moyenne_seuil_max_rouge:
                     category = 'stand'
+                elif moyenne_seuil_min_rouge < area < moyenne_seuil_max_rouge:
+                    category = 'sit'
                 else:
                     category = 'lie'
 

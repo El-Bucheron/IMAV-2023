@@ -37,7 +37,7 @@ altitude = 15
 
 #Choix de la zone de vol : le jour de la compétition, les coordonnées GPS du lieu des mannequins : Lat: 50.909228° Lon: 6.226700°
 
-point = LocationGlobalRelative(48.70637, 7.73398, altitude)
+point = LocationGlobalRelative(48.70652, 7.73407, altitude)
     
 # Décollage
 
@@ -47,15 +47,16 @@ drone.arm_and_takeoff(altitude)
 drone.goto(point, 1)
 
 # Prise de photo de la zone 
-nb_mannequins, image, result = drone.camera.detection_position(altitude)
-print(nb_mannequins)
+for _ in range(5):
+    nb_mannequins, image, result = drone.camera.detection_position(altitude)
+    print(nb_mannequins)
 
-# Temporisation
-sleep(0.5)
-print("Photo prise")
+    # Temporisation
+    sleep(0.5)
+    print("Photo prise")
 
-enregistrement_photo_date_position(drone, image, chemin_dossier)
-enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
+    enregistrement_photo_date_position(drone, image, chemin_dossier)
+    enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
     
 #Retour à la base
 drone.set_mode("RTL")
