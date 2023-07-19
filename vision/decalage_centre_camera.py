@@ -35,7 +35,7 @@ try:
         if centre_aruco_X != None:
             # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
             erreurX = drone.camera.x_imageCenter - centre_aruco_X
-            erreurY = drone.camera.y_imageCenter - centre_aruco_Y
+            erreurY = drone.camera.y_imageCenter - centre_aruco_Y + 119
             print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
             # Affichage de l'erreur et de la vitesse
             image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + " ; Altitude = " + str(drone.vehicle.rangefinder.distance), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
