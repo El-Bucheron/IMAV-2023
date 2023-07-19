@@ -37,7 +37,7 @@ altitude = 15
 
 #Choix de la zone de vol : le jour de la compétition, les coordonnées GPS du lieu des mannequins : Lat: 50.909228° Lon: 6.226700°
 
-point = LocationGlobalRelative(48.70637, 7.73398, altitude)
+point = LocationGlobalRelative(48.70652, 7.73407, altitude)
     
 # Décollage
 

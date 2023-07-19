@@ -123,9 +123,9 @@ class Detection:
             #Mannequin bleu 
 
             petite_seuil_min_bleu = 0 
-            petite_seuil_max_bleu = 1000
-            moyenne_seuil_min_bleu = 1000
-            moyenne_seuil_max_bleu = 1500
+            petite_seuil_max_bleu = 800
+            moyenne_seuil_min_bleu = 800
+            moyenne_seuil_max_bleu = 1200
 
             #Mannequin rouge
 
