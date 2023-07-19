@@ -32,13 +32,14 @@ try:
         # Détection d'un aruco
         centre_aruco_X, centre_aruco_Y, aruco_id, image = drone.camera.detection_aruco(True)
         print(("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")+ " with id " + str(aruco_id) + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
-        # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = drone.camera.x_imageCenter - centre_aruco_X
-        erreurY = drone.camera.y_imageCenter - centre_aruco_Y
-        print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
-        # Affichage de l'erreur et de la vitesse
-        image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + " ; Altitude = " + str(drone.vehicle.rangefinder.distance), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-        image = tracage_nord_est(drone, image)
+        if centre_aruco_X != None:
+            # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
+            erreurX = drone.camera.x_imageCenter - centre_aruco_X
+            erreurY = drone.camera.y_imageCenter - centre_aruco_Y
+            print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+            # Affichage de l'erreur et de la vitesse
+            image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + " ; Altitude = " + str(drone.vehicle.rangefinder.distance), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+            cv2.circle(image, (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 4, (0, 255, 0), -1)
         # Sauvegarde de la photo
         enregistrement_photo_date_position(drone, image, chemin_dossier)
         # Temporisation 
