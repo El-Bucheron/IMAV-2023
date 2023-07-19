@@ -60,7 +60,6 @@ class Detection:
         self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
         self.parameters  = aruco.DetectorParameters_create()
         
-        
         # Paramètres pour la détection de carré blanc
         # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
         self.lower_bound_filtre_blanc = (0,175,0)
@@ -69,7 +68,12 @@ class Detection:
 
         # On définit la gamme de couleur de bleu que l'on souhaite
         self.lower_bound_filtre_bleu = np.array([90, 90, 25])
-        self.upper_bound_filtre_bleu = np.array([160, 255, 200])  
+        self.upper_bound_filtre_bleu = np.array([160, 255, 200])
+
+        # On définit la gamme de couleur de rouge que l'on souhaite
+        self.lower_bound_filtre_red = np.array([159, 105, 25])
+        self.upper_bound_filtre_red = np.array([180, 255, 255])   
+
 
 
 
@@ -99,10 +103,9 @@ class Detection:
         #Analyse de l'image 
         taille_min_forme = 0  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille à 0
 
+        # PARAMETRES A 10M
         if altitude == 10:
-                
-            # PARAMETRES A 10M
-
+            
             # Mannequin bleu
             petite_seuil_min_bleu = 0 
             petite_seuil_max_bleu = 1500
@@ -110,43 +113,36 @@ class Detection:
             moyenne_seuil_max_bleu = 2000
 
             # Mannequin rouge
-
             petite_seuil_min_rouge = 0 
             petite_seuil_max_rouge = 1500
             moyenne_seuil_min_rouge = 1500
             moyenne_seuil_max_rouge = 2000
-            
+
+        # PARAMETRES A 15M    
         elif altitude == 15:
-                
-            # PARAMETRES A 15M
 
             #Mannequin bleu 
-
             petite_seuil_min_bleu = 0 
             petite_seuil_max_bleu = 800
             moyenne_seuil_min_bleu = 800
             moyenne_seuil_max_bleu = 1200
 
             #Mannequin rouge
-
             petite_seuil_min_rouge = 0 
             petite_seuil_max_rouge = 1000
             moyenne_seuil_min_rouge = 1000
             moyenne_seuil_max_rouge= 1500
-            
+
+        #PARAMETRES A 20M    
         elif altitude == 20:
-                
-            #PARAMETRES A 20M
 
             #Mannequin bleu 
-
             petite_seuil_min_bleu = 0 
             petite_seuil_max_bleu = 450
             moyenne_seuil_min_bleu = 450
             moyenne_seuil_max_bleu = 600
 
             #Mannequin rouge
-
             petite_seuil_min_rouge = 0 
             petite_seuil_max_rouge = 450
             moyenne_seuil_min_rouge = 450
@@ -164,31 +160,21 @@ class Detection:
 
         # On définit la gamme de couleur de bleu que l'on souhaite ( H va de 0 à 180 , S et V de 0 à 255)
         lower_blue = np.array([105, 105, 25])
-        upper_blue = np.array([150, 255, 255])
+        upper_blue = np.array([150, 255, 255])   
 
-        # On définit la gamme de couleur de rouge que l'on souhaite
-        lower_red = np.array([159, 105, 25])
-        upper_red = np.array([180, 255, 255])    
-
-        # Création d'un masque binaire à partir d'une image HSV pour les zones bleues
+        # Création d'un masque binaire à partir d'une image HSV pour les zones bleues/rouges
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+        mask_red = cv2.inRange(hsv, self.lower_bound_filtre_red, self.upper_bound_filtre_red)
 
-        # Création d'un masque binaire à partir d'une image HSV pour les zones rouges
-        mask_red = cv2.inRange(hsv, lower_red, upper_red)
-
-        # Dilater les contours pour fusionner les taches bleues proches
+        # Dilater les contours pour fusionner les taches bleues/rouges proches
         dilated_mask_blue = cv2.dilate(mask_blue, None, iterations=3)
-
-        # Dilater les contours pour fusionner les taches rouges proches
         dilated_mask_red = cv2.dilate(mask_red, None, iterations=3)
 
         # Création d'un masque binaire inverse pour le reste de l'image (masque blanc)
         mask_white = cv2.bitwise_not(cv2.bitwise_or(dilated_mask_blue, dilated_mask_red))
 
-        # On applique le masque binaire bleu à l'image RGB pour conserver les zones bleues
+        # On applique le masque binaire bleu/rouge à l'image RGB pour conserver les zones bleues/rouges
         seg_img_blue = cv2.bitwise_and(image, image, mask=dilated_mask_blue)
-
-        # On applique le masque binaire bleu à l'image RGB pour conserver les zones bleues
         seg_img_red = cv2.bitwise_and(image, image, mask=dilated_mask_red)
 
         # On crée une image blanche de la même taille que l'image d'origine
@@ -201,17 +187,13 @@ class Detection:
         result = cv2.add(seg_img_blue, seg_img_red)
         result = cv2.bitwise_or(result, seg_img_white)
 
-        # On cherche le contour des objets et on l'affiche
+        # On cherche le contour des objets bleu et rouge
         contours_blue, _ = cv2.findContours(dilated_mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Trouver les contours des objets rouges et les afficher
         contours_red, _ = cv2.findContours(dilated_mask_red.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Compteur de zones rouges
-        red_zones_count = 0
-
-        # Compteur de zones bleues
-        blue_zones_count = 0
+        # Compteur de zones rouges/bleues
+        #red_zones_count = 0
+        #blue_zones_count = 0
 
         #Nombre de mannequins
         nb_mannequins = 0
@@ -237,8 +219,9 @@ class Detection:
                 cv2.putText(result, category, (x + int(w / 2), y + int(h / 2)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
+                nb_mannequins += 1
                 # Incrémenter le compteur de zones bleues
-                blue_zones_count += 1
+                #blue_zones_count += 1
 
         for contour in contours_red:
             x, y, w, h = cv2.boundingRect(contour)
@@ -261,11 +244,12 @@ class Detection:
                 cv2.putText(result, category, (x + int(w / 2), y + int(h / 2)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
+                nb_mannequins += 1
                 # Incrémenter le compteur de zones bleues
-                red_zones_count += 1
+                #red_zones_count += 1
 
         #Calculer le nombre de mannequins
-        nb_mannequins = blue_zones_count + red_zones_count
+        #nb_mannequins = blue_zones_count + red_zones_count
 
         # Afficher le nombre de zones bleues identifiées
         cv2.putText(result, f"Mannequins : {nb_mannequins}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)

@@ -18,6 +18,10 @@ from dronekit import LocationGlobalRelative
 from utilities import enregistrement_photo_date_position, creation_dossier_photo
 from datetime import datetime
 
+#Instanciation de l'objet drone
+drone = Drone()
+drone.attente_stabilize_auto()
+
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
 try:
@@ -26,37 +30,27 @@ except IndexError:
     nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S")
 # Création du dossier de photos
 chemin_dossier = creation_dossier_photo(nom_dossier)
-
-#Instanciation de l'objet drone
-drone = Drone()
-drone.attente_stabilize_auto()
-    
     
 #Choix de l'altitude de vol : 
 altitude = 15
-
-#Choix de la zone de vol : le jour de la compétition, les coordonnées GPS du lieu des mannequins : Lat: 50.909228° Lon: 6.226700°
-
-point = LocationGlobalRelative(48.70652, 7.73407, altitude)
-    
 # Décollage
-
 drone.arm_and_takeoff(altitude)
-
+#Choix de la zone de vol : le jour de la compétition, les coordonnées GPS du lieu des mannequins : Lat: 50.909228° Lon: 6.226700°
+point = LocationGlobalRelative(48.70652, 7.73407, altitude)
 #Vol vers la zone où se trouve les mannequins
 drone.goto(point, 1)
 
 # Prise de photo de la zone 
-for _ in range(5):
-    nb_mannequins, image, result = drone.camera.detection_position(altitude)
-    print(nb_mannequins)
+nb_mannequins, image, result = drone.camera.detection_position(altitude)
+print(nb_mannequins)
 
-    # Temporisation
-    sleep(0.5)
-    print("Photo prise")
+# Temporisation
+sleep(0.5)
+print("Photo prise")
 
-    enregistrement_photo_date_position(drone, image, chemin_dossier)
-    enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
+# Enregistrement des photos
+enregistrement_photo_date_position(drone, image, chemin_dossier)
+enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
     
 #Retour à la base
 drone.set_mode("RTL")

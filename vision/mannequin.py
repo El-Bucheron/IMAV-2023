@@ -30,11 +30,12 @@ print("Début de programme")
 # Structure "try" pour pouvoir arrêter le programme avec un Ctrl+C
 try:
     while True:
-        # Détection d'un aruco
-        centre_aruco_X, centre_aruco_Y, aruco_id, image = drone.camera.detection_aruco(True)
-        print(("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")+ " with id " + str(aruco_id) + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
-        # Sauvegarde de la photo
-        enregistrement_photo_date_position(drone, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
+        # Prise de photo de la zone 
+        nb_mannequins, image, result = drone.camera.detection_position(15)
+        print("Mannequins détectés : " + nb_mannequins)
+        # Enregistrement des photos
+        enregistrement_photo_date_position(drone, image, chemin_dossier)
+        enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
         # Temporisation 
         sleep(1)
 except KeyboardInterrupt:
