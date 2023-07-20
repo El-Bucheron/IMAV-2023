@@ -39,8 +39,8 @@ class Drone:
         #self.ki_atterrissage = 0.00001  # 0.0000001
 
         # Coefficients de l'asservissement PID du suivi de véhicule
-        self.kp_suivi_vehicule = 0.025
-        self.kd_suivi_vehicule = 0.00025  # 0.00001 working "fine" for both
+        self.kp_suivi_vehicule = 0.0125
+        self.kd_suivi_vehicule = 0.000125  # 0.00001 working "fine" for both
         self.ki_suivi_vehicule = 0.000002  # 0.0000001
 
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales

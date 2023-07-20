@@ -50,7 +50,7 @@ try:
         if(drone.vehicle.rangefinder.distance > 1):
             # Prise de la photo
             photo = drone.camera.prise_photo()
-            tracage_nord_est(drone, photo)
+            # tracage_nord_est(drone, photo)
             # Enregistrement de la photo
             enregistrement_photo_date_position(drone, photo, chemin_dossier)
             # Temporisation
