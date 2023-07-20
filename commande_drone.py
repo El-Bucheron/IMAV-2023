@@ -318,7 +318,7 @@ class Drone:
                 vz = 1.5 
             elif altitude > 5:
                 vz = 1
-            elif altitude > 3:
+            elif altitude > 1.5:
                 vz = 0.5
             else:
                 vz = 0
@@ -435,8 +435,6 @@ class Drone:
             vz = 1
         elif altitude > 1.5:
             vz = 0.5
-        else:
-            vz = 0
     
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
@@ -512,7 +510,7 @@ class Drone:
         
         # Tant que le drone n'est pas à 50 cm du sol, 
         # on lance l'asservissement du drone
-        while altitude > 1.2:
+        while altitude > 2:
             
             # Récupération de l'altitude du drone
             altitude = self.vehicle.rangefinder.distance
