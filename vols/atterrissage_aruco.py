@@ -21,8 +21,11 @@ try:
         print("En attente du mode STABILIZE pour atterrir")
         sleep(1)
     while drone.get_mode != "LOITER":
+        print(drone.get_mode())
         print("En attente du mode LOITER pour atterrir")
         sleep(1)
+    drone.set_mode("GUIDED")
+    
 
     # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
     # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
