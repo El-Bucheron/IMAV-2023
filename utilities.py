@@ -148,5 +148,5 @@ def tracage_nord_est(drone, image):
             (0, 0, 0), 2)
     cv2.line(image, 
             (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
-            (int((drone.camera.x_imageCenter)*-sin(drone.vehicle.attitude.yaw+pi/2)), int((drone.camera.y_imageCenter-50)*cos(drone.vehicle.attitude.yaw+pi/2))), 
+            (int((drone.camera.x_imageCenter)*(-sin(drone.vehicle.attitude.yaw+pi/2))), int((drone.camera.y_imageCenter-50)*cos(drone.vehicle.attitude.yaw+pi/2))), 
             (0, 0, 255), 2)
