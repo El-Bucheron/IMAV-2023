@@ -274,7 +274,7 @@ class Drone:
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX_2 = self.camera.x_imageCenter - aruco_center_x
         erreurY_2 = self.camera.y_imageCenter - aruco_center_y
-        print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+        print("Erreur en pixels : EX = " + str(erreurX_2) + " ; EY = " + str(erreurY_2))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX_2**2+erreurY_2**2)
         dist_angle = atan2(erreurY_2, erreurX_2)
