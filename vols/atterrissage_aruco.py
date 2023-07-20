@@ -20,8 +20,9 @@ try:
     while drone.get_mode() != "STABILIZE":
         print("En attente du mode STABILIZE pour atterrir")
         sleep(1)
-    while drone.get_mode() != "LOITER":
-        print("En attente du mode LOITER pour atterrir")
+    while drone.get_mode() != "RTL":
+        print("En attente du mode RTL pour atterrir")
+        print(drone.get_mode())
         sleep(1)
     drone.set_mode("GUIDED")
     
