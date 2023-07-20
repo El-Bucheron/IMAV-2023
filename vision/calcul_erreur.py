@@ -37,11 +37,11 @@ try:
         if centre_aruco_X != None:
             # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
             erreurX = (drone.camera.x_imageCenter - centre_aruco_X)/(drone.camera.x_imageCenter) * altitude * tan(radians(drone.camera.horizontal_field_view/2)) 
-            erreurY = (drone.camera.y_imageCenter - centre_aruco_Y)/(drone.camera.y_imageCenter) * altitude * tan(radians(drone.camera.vertical_field_view/2)) + 0.2
-            print("Erreur en mètres : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+            erreurY = (drone.camera.y_imageCenter - centre_aruco_Y)/(drone.camera.y_imageCenter) * altitude * tan(radians(drone.camera.vertical_field_view/2))
+            print("Erreur en cm : EX = " + str(100*erreurX) + " ; EY = " + str(100*erreurY))
             # Affichage de l'erreur et de la vitesse
             image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) , (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-            cv2.circle(image, (drone.camera.x_imageCenter, int(drone.camera.y_imageCenter + 0.2*drone.camera.y_imageCenter/(altitude*tan(radians(drone.camera.vertical_field_view/2))))), 4, (0, 255, 0), -1)
+            cv2.circle(image, (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 4, (0, 255, 0), -1)
         # Sauvegarde de la photo
         enregistrement_photo_date_position(drone, image, chemin_dossier)
         # Temporisation 

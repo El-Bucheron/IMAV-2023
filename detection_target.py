@@ -28,7 +28,7 @@ class Detection:
         sensor_length = 3.76  # Sensor length (x dimension) [mm]
         sensor_height = 2.74  # Sensor length (y dimension) [mm]  
         self.horizontal_field_view = 62.2 # [°] Angle horizontal du champ de vision de la caméra
-        self.vertical_field_view = 18.8 # [°] Angle vertical du champ de vision de la caméra
+        self.vertical_field_view = 48.8 # [°] Angle vertical du champ de vision de la caméra
         self.dist_coeff_x = sensor_length/(focal_length*self.horizontal_res)
         self.dist_coeff_y = sensor_height/(focal_length*self.vertical_res)
 
