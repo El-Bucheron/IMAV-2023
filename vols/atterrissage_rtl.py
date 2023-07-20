@@ -15,9 +15,9 @@ from datetime import datetime
 #Instanciation de l'objet drone
 drone = Drone()
 
-@drone.on_message('SERVO_OUTPUT_RAW')
+@drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
-    print 'message: %s' % message
+    print('message: %s' % message)
 
 print("Début de programme")
 try:
@@ -26,7 +26,6 @@ try:
         sleep(1)
     while drone.get_mode() != "AUTO":
         print("En attente du mode AUTO pour atterrir")
-        print(drone.get_mode())
         sleep(1)
     drone.set_mode("GUIDED")
     
