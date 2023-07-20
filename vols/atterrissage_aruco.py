@@ -17,7 +17,10 @@ drone = Drone()
     
 print("Début de programme")
 try:
-    while drone.vehicle.rangefinder.distance > 6 and drone.get_mode != "LOITER":
+    while drone.get_mode() != "STABILIZE":
+        print("En attente du mode STABILIZE pour atterrir")
+        sleep(1)
+    while drone.get_mode != "LOITER":
         print("En attente du mode LOITER pour atterrir")
         sleep(1)
 
