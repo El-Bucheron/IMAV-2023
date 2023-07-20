@@ -30,7 +30,7 @@ class Drone:
         
         # Coefficients de l'asservissement PID de l'atterrissage
         self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
-        self.kd_atterrissage = 0.0001  # 0.00001 working "fine" for both
+        self.kd_atterrissage = 0.0002  # 0.00001 working "fine" for both
         self.ki_atterrissage = 0.000001  # 0.0000001
 
     # Coefficients de l'asservissement PID de l'atterrissage pour l'erreur en METRES
@@ -216,7 +216,7 @@ class Drone:
         
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y + 140
+        erreurY = self.camera.y_imageCenter - aruco_center_y
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -269,11 +269,11 @@ class Drone:
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance        
         # Calcul de la valeur du coefficient du correcteur P en fonction de l'altitude du drone       
-        self.kp_atterrissage = 0.003 if altitude < 5 else 0.005
+        self.kp_atterrissage = 0.005 if altitude < 5 else 0.008
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX_2 = self.camera.x_imageCenter - aruco_center_x
-        erreurY_2 = self.camera.y_imageCenter - aruco_center_y
+        erreurY_2 = self.camera.y_imageCenter - aruco_center_y + 170
         print("Erreur en pixels : EX = " + str(erreurX_2) + " ; EY = " + str(erreurY_2))
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX_2**2+erreurY_2**2)
@@ -314,14 +314,12 @@ class Drone:
         # Sinon on le fait se rapprocher du sol avec une vitesse variant en fonction de l'altitude du drone
         else:
         #Choix de la vitesse verticale en fonction de l'altitude
-            if altitude > 9:
+            if altitude > 8:
                 vz = 1.5 
             elif altitude > 5:
                 vz = 1
-            elif altitude > 1.5:
+            elif altitude > 2:
                 vz = 0.5
-            else:
-                vz = 0
         
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
