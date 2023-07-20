@@ -359,43 +359,39 @@ class Detection:
 
 
     def detection_carre_bleu(self):
-    
+
+        # Détection de carré bleus à 30m
+        
         # Prise de la photo avec la PiCamera
         image = self.prise_photo()
         # Redimensionnement de l'image
         image = imutils.resize(image, width=600)
-        # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
+
+        # Convertir l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        # Création d'un masque binaire à partir de l'image HSV pour les zones bleues
-        mask_blue = cv2.inRange(hsv, self.lower_bound_filtre_bleu, self.upper_bound_filtre_bleu)
-        # Création d'un masque binaire inverse pour le reste de l'image
-        mask_white = cv2.bitwise_not(mask_blue)
-        # Application du masque binaire bleu à l'image RGB pour conserver les zones bleues
-        seg_img_blue = cv2.bitwise_and(image, image, mask=mask_blue)
-        # Création d'une image blanche de la même taille que l'image d'origine
-        white_img = np.ones_like(image, dtype=np.uint8) * 255
-        # Application du masque binaire inverse à l'image blanche pour avoir le reste en blanc
-        seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
-        # Combinaison des deux images pour obtenir le résultat final
-        result = cv2.bitwise_or(seg_img_blue, seg_img_white)
-        # Conversion de l'image en nuances de gris
-        gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-        # Threshold
-        _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-        # Recherche de contours
-        contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        i = 0
+        
+        # Définir la plage de couleur de bleu que l'on souhaite détecter
+        lower_blue = np.array([90, 100, 100])
+        upper_blue = np.array([120, 255, 255])
+        
+        # Créer un masque binaire en fonction de l'espace de couleur HSV pour les zones bleues
+        mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+        
+        # Trouver les contours dans le masque binaire
+        contours, _ = cv2.findContours(mask_blue, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # Parcourir tous les contours détectés et dessiner les rectangles autour des formes détectées
         for contour in contours:
-            _, _, w, h = cv2.boundingRect(contour)
-            if w > 30 and h > 30:
-                if i == 0:
-                    i = 1
-                    continue
-                peri = cv2.arcLength(contour, True)
-                approx = cv2.approxPolyDP(contour, 0.05 * peri, True)
-                if len(approx) < 5:
-                    cv2.drawContours(image, [contour], 0, (0, 0, 255), 3)
-                    return True, image, threshold
+            # Approximer la forme du contour en un rectangle
+            x, y, w, h = cv2.boundingRect(contour)
+        
+            # Ignorer les petits contours qui pourraient être du bruit
+            if w > 10 and h > 10:
+                # Dessiner un rectangle autour de la forme détectée (dans ce cas, le carré bleu)
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # Mettre le nom de la forme au centre du rectangle
+                cv2.putText(image, 'Carre Bleu', (x + int(w/2) - 50, y + int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                return True, image
 
-        return False, image, threshold 
+        return False, image
+    
