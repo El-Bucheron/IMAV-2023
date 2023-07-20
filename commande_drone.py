@@ -216,7 +216,7 @@ class Drone:
         
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y
+        erreurY = self.camera.y_imageCenter - aruco_center_y + 140
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -544,7 +544,7 @@ class Drone:
                 print("Détection par aruco")
                 centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
                 # Asservissement par rapport au centre de l'aruco
-                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y+140)
+                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y)
                 # Affichage de l'erreur et de la vitesse
                 image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
                 image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
