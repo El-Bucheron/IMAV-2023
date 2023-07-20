@@ -22,6 +22,7 @@ try:
         sleep(1)
     while drone.get_mode() != "RTL":
         print("En attente du mode RTL pour atterrir")
+        print(drone.get_mode())
         sleep(1)
     drone.set_mode("GUIDED")
     
