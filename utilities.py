@@ -144,9 +144,9 @@ def enregistrement_photo_date_position(drone, image, folder_path, complement_nom
 def tracage_nord_est(drone, image):
     cv2.line(image, 
             (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
-            (int((drone.camera.x_imageCenter+50)*cos(drone.vehicle.attitude.yaw+pi/2)), int((drone.camera.y_imageCenter)*sin(drone.vehicle.attitude.yaw+pi/2))), 
+            (int(-(drone.camera.x_imageCenter+50)*sin(drone.vehicle.attitude.yaw)), int(drone.camera.y_imageCenter*cos(drone.vehicle.attitude.yaw))), 
             (0, 0, 0), 2)
     cv2.line(image, 
             (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
-            (int((drone.camera.x_imageCenter)*(-sin(drone.vehicle.attitude.yaw+pi/2))), int((drone.camera.y_imageCenter-50)*cos(drone.vehicle.attitude.yaw+pi/2))), 
+            (int(drone.camera.x_imageCenter*(-cos(drone.vehicle.attitude.yaw))), int(-(drone.camera.y_imageCenter-50)*sin(drone.vehicle.attitude.yaw))), 
             (0, 0, 255), 2)

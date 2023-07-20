@@ -31,15 +31,17 @@ try:
     while True:
         # Détection d'un aruco
         centre_aruco_X, centre_aruco_Y, aruco_id, image = drone.camera.detection_aruco(True)
-        print(("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")+ " with id " + str(aruco_id) + " altitude: " + str('%.2f'%(drone.vehicle.rangefinder.distance)))
-        if centre_aruco_X != None:
-            # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-            erreurX = drone.camera.x_imageCenter - centre_aruco_X
-            erreurY = drone.camera.y_imageCenter - centre_aruco_Y + 140
-            print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
-            # Affichage de l'erreur et de la vitesse
-            image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY) + " ; Altitude = " + str(drone.vehicle.rangefinder.distance), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-            cv2.circle(image, (drone.camera.x_imageCenter, centre_aruco_Y + 140), 4, (0, 255, 0), -1)
+        print("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")
+        # Calcul de l'asservissement 
+        erreurX, erreurY, erreurNord, erreurEst, VEst, VNord = drone.asservissement_atterrissage_metres(centre_aruco_X, centre_aruco_Y)
+        print("Erreur en pixels : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+        print("Erreur NORD-EST: EN = " + str(erreurNord) + " ; EE = " + str(erreurEst))
+        print("Vitesse NORD-EST : VN = " + str(VNord) + " ; VE = " + str(VEst))
+        # Affichage de l'erreur et de la vitesse
+        cv2.putText(image, "Erreur XY: EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        cv2.putText(image, "Erreur NORD-EST: EN = " + str(erreurNord) + " ; EE = " + str(erreurEst), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        cv2.putText(image, "Vitesse NORD-EST : VN = " + str(VNord) + " ; VE = " + str(VEst), (0, 75), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        tracage_nord_est(drone, image)
         # Sauvegarde de la photo
         enregistrement_photo_date_position(drone, image, chemin_dossier)
         # Temporisation 

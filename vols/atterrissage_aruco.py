@@ -7,7 +7,7 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-from utilities import creation_dossier_photo, enregistrement_photo_date_position
+from utilities import creation_dossier_photo
 from commande_drone import Drone
 from time import sleep
 from datetime import datetime
@@ -22,11 +22,9 @@ try:
         sleep(1)
     while drone.get_mode() != "RTL":
         print("En attente du mode RTL pour atterrir")
-        print(drone.get_mode())
         sleep(1)
     drone.set_mode("GUIDED")
     
-
     # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
     # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
     try:

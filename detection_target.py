@@ -36,7 +36,7 @@ class Detection:
         self.camera = PiCamera()
         self.camera.resolution = (self.horizontal_res, self.vertical_res)
         self.camera.framerate = 30
-        self.rawCapture = PiRGBArray(self.camera, size=(self.horizontal_res, self.vertical_res))
+        #self.rawCapture = PiRGBArray(self.camera, size=(self.horizontal_res, self.vertical_res))
 
         # Récupération du chemin d'accès global
         self.package_path = os.getcwd()
@@ -57,8 +57,8 @@ class Detection:
         self.y_imageCenter = int(self.vertical_res_corrigee/2)
 
         # Paramètres pour la détection d'aruco
-        self.aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
-        self.parameters  = aruco.DetectorParameters_create()
+        self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_1000)
+        self.parameters = aruco.DetectorParameters_create()
         
         # Paramètres pour la détection de carré blanc
         # Définition des limites maximales et minimales de filtre pour garder la couleur blanche en HLS
@@ -78,7 +78,6 @@ class Detection:
 
 
     # Fonction permettant de prendre une photo avec la camera
-    # On peut également choisir de stocker la photo si on lui fournit en argument un chemin pour stocker la photo
     def prise_photo(self):
         photo = np.empty((self.vertical_res * self.horizontal_res * 3), dtype=np.uint8)
         # Prise de la photo
@@ -154,48 +153,36 @@ class Detection:
 
         # La variable image représente la vidéo, il est redimensionné avec resize
         image = imutils.resize(image, width=800)
-
         # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
         # On définit la gamme de couleur de bleu que l'on souhaite ( H va de 0 à 180 , S et V de 0 à 255)
         lower_blue = np.array([105, 105, 25])
         upper_blue = np.array([150, 255, 255])   
-
         # Création d'un masque binaire à partir d'une image HSV pour les zones bleues/rouges
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
         mask_red = cv2.inRange(hsv, self.lower_bound_filtre_red, self.upper_bound_filtre_red)
-
         # Dilater les contours pour fusionner les taches bleues/rouges proches
         dilated_mask_blue = cv2.dilate(mask_blue, None, iterations=3)
         dilated_mask_red = cv2.dilate(mask_red, None, iterations=3)
-
         # Création d'un masque binaire inverse pour le reste de l'image (masque blanc)
         mask_white = cv2.bitwise_not(cv2.bitwise_or(dilated_mask_blue, dilated_mask_red))
-
         # On applique le masque binaire bleu/rouge à l'image RGB pour conserver les zones bleues/rouges
         seg_img_blue = cv2.bitwise_and(image, image, mask=dilated_mask_blue)
         seg_img_red = cv2.bitwise_and(image, image, mask=dilated_mask_red)
-
         # On crée une image blanche de la même taille que l'image d'origine
         white_img = np.ones_like(image, dtype=np.uint8) * 255
-
         # On applique le masque binaire inverse à l'image blanche pour avoir le reste en blanc
         seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
-
         # On combine les images segmentées bleues et rouges en les additionnant
         result = cv2.add(seg_img_blue, seg_img_red)
         result = cv2.bitwise_or(result, seg_img_white)
-
         # On cherche le contour des objets bleu et rouge
         contours_blue, _ = cv2.findContours(dilated_mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours_red, _ = cv2.findContours(dilated_mask_red.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         # Compteur de zones rouges/bleues
         #red_zones_count = 0
         #blue_zones_count = 0
-
-        #Nombre de mannequins
+        # Nombre de mannequins
         nb_mannequins = 0
 
         for contour in contours_blue:
@@ -412,4 +399,3 @@ class Detection:
                     return True, image, threshold
 
         return False, image, threshold 
-        
