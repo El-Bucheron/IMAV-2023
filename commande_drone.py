@@ -8,12 +8,56 @@ Created on 2022
 
 import numpy as np
 import cv2
+import cv2.aruco as aruco
 from time import sleep
 from math import atan2, cos, sin, sqrt, tan, radians
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 from utilities import *
 from detection_target import Detection
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Fonctions de David (parce que oui je suis chiant :D)
+# Certaines fonctions sont aussi dans la class Drone donc a voir qui prendra le pas sur l'autre mais pour une raison que j'ignore elle ne
+# veulent pas etre dans la class
+# ------------------------------------------------------------------------------------------------------------------------------------------
+
+# Connexion au véhicule ArduPilot
+vehicle = connect('/dev/ttyACM0', baud=115200, wait_ready=True)
+
+# Initialisation de la caméra Raspberry Pi
+camera = cv2.VideoCapture(0)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+# Paramètres de détection du marqueur ArUco
+aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_1000)
+parameters = aruco.DetectorParameters_create()
+
+# Fonction pour obtenir les coordonnées GPS du drone
+def get_gps_coordinates(self):
+    return self.vehicle.location.global_relative_frame.lat, self.vehicle.location.global_frame.lon
+
+def calculate_marker_gps(drone_lat, drone_lon, centre_aruco_X, centre_aruco_Y, self):
+
+    distance_vision, angle_vision = get_distance_angle_picture(self.camera.x_imageCenter, self.camera.y_imageCenter,
+                                                                centre_aruco_X, centre_aruco_Y,
+                                                                self.vehicle.rangefinder.distance, self.camera.dist_coeff_x, self.camera.dist_coeff_y)
+
+    d_lat = centre_aruco_Y / (111111.0 * distance_vision)
+    d_lon = centre_aruco_X / (111111.0 * np.cos(np.radians(drone_lat)) * distance_vision)
+
+    alpha = angle_vision + vehicle.attitude.yaw
+
+    marker_lat = drone_lat + (d_lat * cos(alpha))
+    marker_lon = drone_lon + (d_lon * sin(alpha))
+    return marker_lat, marker_lon
+    
+# Fonction pour déplacer le drone vers une position donnée
+def goto_position(target_lat, target_lon):
+    target_location = LocationGlobalRelative(target_lat, target_lon, vehicle.location.global_frame.alt)
+    vehicle.simple_goto(target_location)
 
 
 
@@ -495,40 +539,46 @@ class Drone:
 
         
   
-    def atterrissage_aruco_david(self):
-        
-        # Récupération de l'altitude du drone
-        altitude = self.vehicle.rangefinder.distance
-        
-        # Tant que le drone n'est pas à 50 cm du sol, on lance l'asservissement du drone
-        while altitude > 7:
-                print("Descente du drone")
-                self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
-                altitude = self.vehicle.rangefinder.distance
-                
-        # Détection du centre de l'aruco
-        centre_aruco_X, centre_aruco_Y, _ = self.camera.detection_aruco()
-            
-        # Estimating marker location from vision
-        distance_vision, angle_vision = get_distance_angle_picture(self.camera.x_imageCenter, self.camera.y_imageCenter,
-                                                                 centre_aruco_X, centre_aruco_Y,
-                                                                 self.vehicle.rangefinder.distance, self.camera.dist_coeff_x, self.camera.dist_coeff_y)
-        current_location = LocationGlobalRelative(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, 0)
-        estimated_location = get_GPS_location(current_location, self.vehicle.attitude.yaw + angle_vision, distance_vision)
-        print("Déplacement jusqu'à la position de l'aruco")
-        self.vehicle.goto(estimated_location, 0.25)
+    def suivi_aruco_david(self):
+        while True:
+            # Capture d'une image de la caméra
+            ret, frame = camera.read()
+    
+            # Détection des marqueurs ArUco dans l'image
+            corners, ids, _ = aruco.detectMarkers(frame, aruco_dict, parameters=parameters)
 
-        # Envoi de la commande d'atterissage
-        print("Atterissage sur aruco")
-        msg = self.vehicle.message_factory.landing_target_encode(
-            0,          # time_boot_ms (non utilisé)
-            0,          # target num
-            0,          # frame
-            estimated_location.lat, # X 
-            estimated_location.lon, # Y 
-            0,          # altitude. Not supported.
-            0,0         # size of target in radians
-        )
-        self.vehicle.send_mavlink(msg)
-        #self.set_mode("LAND")
-        self.vehicle.flush()
+            if ids is not None and 700 in ids:                
+                # Calcul de la position GPS du drone
+                drone_lat, drone_lon = get_gps_coordinates()
+                
+                # Calcul de la position GPS du centre du marqueur ArUco
+                centre_aruco_X, centre_aruco_Y, _ = self.camera.detection_aruco()
+                marker_lat, marker_lon = calculate_marker_gps(drone_lat, drone_lon, centre_aruco_X, centre_aruco_Y)
+                
+                # Affichage des coordonnées GPS du marqueur ArUco
+                print("GPS: %s" % self.vehicle.gps_0)
+                print("GPS du marqueur ArUco ID 800:")
+                print("Latitude:", marker_lat)
+                print("Longitude:", marker_lon)
+                
+                # Déplacement du drone vers le marqueur ArUco
+                print("Déplacement jusqu'à la position de l'aruco")
+                goto_position(marker_lat, marker_lon)
+                
+                # Sortie de la boucle "if"
+                break
+
+            # Affichage de l'image avec les marqueurs ArUco
+            frame = aruco.drawDetectedMarkers(frame, corners, ids)
+            cv2.imshow("ArUco Marker Detection", frame)
+            
+            # Sortie de la boucle si la touche 'q' est pressée
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # Fermeture de la connexion au véhicule ArduPilot
+        # vehicle.close()
+
+        # Fermeture de la caméra et fermeture des fenêtres OpenCV
+        camera.release()
+        cv2.destroyAllWindows()
