@@ -6,7 +6,6 @@ Created on 2022
 @author: Thomas Pavot
 """
 
-import numpy as np
 import cv2
 from time import sleep
 from math import atan2, cos, sin, sqrt, tan, radians
@@ -32,11 +31,6 @@ class Drone:
         self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
         self.kd_atterrissage = 0.0002  # 0.00001 working "fine" for both
         self.ki_atterrissage = 0.000001  # 0.0000001
-
-    # Coefficients de l'asservissement PID de l'atterrissage pour l'erreur en METRES
-        #self.kp_atterrissage = 1 # Coefficient mis à 0 car initialisé plus tard
-        #self.kd_atterrissage = 0.001  # 0.00001 working "fine" for both
-        #self.ki_atterrissage = 0.00001  # 0.0000001
 
         # Coefficients de l'asservissement PID du suivi de véhicule
         self.kp_suivi_vehicule = 0.0125

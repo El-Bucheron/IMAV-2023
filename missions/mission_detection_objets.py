@@ -3,9 +3,6 @@
 #Librairies nécessaires
 import os
 import sys
-import cv2
-import numpy as np
-import imutils
 package_path = os.getcwd()
 while package_path[-9:] != "IMAV_2023":
     package_path = os.path.dirname(package_path)
@@ -43,10 +40,6 @@ drone.goto(point, 1)
 # Prise de photo de la zone 
 nb_mannequins, image, result = drone.camera.detection_position(altitude)
 print(nb_mannequins)
-
-# Temporisation
-sleep(0.5)
-print("Photo prise")
 
 # Enregistrement des photos
 enregistrement_photo_date_position(drone, image, chemin_dossier)

@@ -47,8 +47,8 @@ print("Début de programme")
 try:
     while True:
 
-        # Si le drone est à moins de 14 mètres d'altitude on ne prend pas de photo
-        if drone.vehicle.rangefinder.distance <= 0.5:
+        # Si le drone est à moins de 25 mètres d'altitude on ne prend pas de photo
+        if drone.vehicle.rangefinder.distance <= 25:
             print("drone trop bas")
             sleep(0.5)
             continue
@@ -59,7 +59,7 @@ try:
         enregistrement_photo_date_position(drone, image, chemin_carto)
         if detection == True:
             enregistrement_photo_date_position(drone, image, chemin_carre_bleu)             
-        # Temporisation prenant en comtpe le temps de prise de la photo (environ 0.3 sec) pour avoir deux photos par secondes
+        # Temporisation prenant en compte le temps de prise de la photo (environ 0.3 sec) pour avoir deux photos par secondes
         sleep(0.2)
 
 # Interruption de la boucle par ctrl+C     

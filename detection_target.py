@@ -11,10 +11,8 @@ import cv2.aruco as aruco
 import sys, time
 from dronekit import LocationGlobalRelative
 from picamera import PiCamera
-from picamera.array import PiRGBArray
 from utilities import *
 import imutils
-from imutils.video import FPS
 
 class Detection:
     def __init__(self):
@@ -103,7 +101,7 @@ class Detection:
         taille_min_forme = 0  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille à 0
 
         # PARAMETRES A 10M
-        if altitude == 10:
+        if altitude == 10: #if altitude < 11:
             
             # Mannequin bleu
             petite_seuil_min_bleu = 0 
@@ -118,7 +116,7 @@ class Detection:
             moyenne_seuil_max_rouge = 2000
 
         # PARAMETRES A 15M    
-        elif altitude == 15:
+        elif altitude == 15: #elif altitude < 16:
 
             #Mannequin bleu 
             petite_seuil_min_bleu = 0 
@@ -133,7 +131,7 @@ class Detection:
             moyenne_seuil_max_rouge= 1500
 
         #PARAMETRES A 20M    
-        elif altitude == 20:
+        elif altitude == 20: #else:
 
             #Mannequin bleu 
             petite_seuil_min_bleu = 0 
