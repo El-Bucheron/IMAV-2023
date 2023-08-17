@@ -7,29 +7,24 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-from utilities import creation_dossier_photo, enregistrement_photo_date_position
+from utilities import creation_dossier_photo
 from commande_drone import Drone
 from time import sleep
 from datetime import datetime
 
 #Instanciation de l'objet drone
 drone = Drone()
-
-@drone.vehicle.on_message('SERVO_OUTPUT_RAW')
-def listener(self, name, message):
-    print('message: %s' % message)
-
+    
 print("Début de programme")
 try:
     while drone.get_mode() != "STABILIZE":
         print("En attente du mode STABILIZE pour atterrir")
         sleep(1)
-    while drone.get_mode() != "AUTO":
-        print("En attente du mode AUTO pour atterrir")
+    while drone.get_mode() != "RTL":
+        print("En attente du mode RTL pour atterrir")
         sleep(1)
     drone.set_mode("GUIDED")
     
-
     # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
     # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
     try:

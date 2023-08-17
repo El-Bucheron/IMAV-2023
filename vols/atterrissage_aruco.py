@@ -9,33 +9,41 @@ sys.path.insert(0, package_path)
 # Imports
 from utilities import creation_dossier_photo
 from commande_drone import Drone
-from time import sleep
 from datetime import datetime
 
 #Instanciation de l'objet drone
 drone = Drone()
-    
-print("Début de programme")
-try:
-    while drone.get_mode() != "STABILIZE":
-        print("En attente du mode STABILIZE pour atterrir")
-        sleep(1)
-    while drone.get_mode() != "RTL":
-        print("En attente du mode RTL pour atterrir")
-        sleep(1)
-    drone.set_mode("GUIDED")
-    
-    # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
-    # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
-    try:
-        nom_dossier = sys.argv[1]  
-    except IndexError:
-        nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S")
-    # Création du dossier de photos
-    chemin_dossier = creation_dossier_photo(nom_dossier)
 
+# Listerner déclanchant la manoeuvre d'atterissage
+@drone.vehicle.on_message('SERVO_OUTPUT_RAW')
+def listener(self, name, message):
     print("Début de la manoeuvre d'atterissage")
-    drone.atterrissage_aruco_fonctionnel(chemin_dossier)  
+    try:
+        drone.atterrissage_aruco_fonctionnel(chemin_dossier)
+    except Exception as e:
+        print(e)
+    finally:
+        sys.exit(0) 
+      
 
+# On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
+# Sinon on utilse la date et l'heure d'appel du code pour le nommer  
+try:
+    nom_dossier = sys.argv[1]  
+except IndexError:
+    nom_dossier = datetime.now().strftime("%d-%m %H:%M:%S")
+# Création du dossier de photos
+chemin_dossier = creation_dossier_photo(nom_dossier)
+
+
+# Attente du mode auto puis du mode stabilize
+print("Début de programme")
+drone.attente_stabilize_auto()  
+
+
+# Boucle d'attente de la commande "SERVO_OUTPUT_RAW"
+try:
+    while True:
+        pass
 except KeyboardInterrupt:
     print("Fin de programme")
