@@ -1,3 +1,4 @@
+
 # Code permettant d'importer la classe "Drone"
 import os
 import sys
@@ -15,12 +16,11 @@ drone = Drone()
 # Listerner déclanchant la manoeuvre d'atterissage
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
-    print('Commande "SERVO_OUTPUT_RAW" recue')
+    print(message.servo10_raw)
 
 # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
 try:
     while True:
-        print("Aucune consigne recue")
-        sleep(1)
+        pass
 except KeyboardInterrupt:
     print("Interruption de programme")
