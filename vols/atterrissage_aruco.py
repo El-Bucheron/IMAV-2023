@@ -1,3 +1,4 @@
+
 # Code permettant d'importer la classe "Drone"
 import os
 import sys
@@ -10,32 +11,20 @@ sys.path.insert(0, package_path)
 from utilities import creation_dossier_photo
 from commande_drone import Drone
 from datetime import datetime
+from time import sleep
 
 #Instanciation de l'objet drone
 drone = Drone()
 
+boolean = True
 
 # Listerner déclanchant la manoeuvre d'atterissage
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
-
     # Condition de déclenchement de la manoeuvre d'atterissage
-    if message.servo10_raw == 1350:
-        
-        # Passage et attente en mode "GUIDED"    
-        self.set_mode("GUIDED")
-        while self.get_mode() != "GUIDED":
-            pass
-
-        # Atterrissage
-        print("Début de la manoeuvre d'atterissage")
-        try:
-            drone.atterrissage_aruco_fonctionnel(chemin_dossier)
-        except Exception as e:
-            print(e)
-        finally:
-            sys.exit(0) 
-      
+    print(message.servo10_raw)
+    if int(message.servo10_raw) == 1350:
+        boolean = False
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
@@ -49,12 +38,21 @@ chemin_dossier = creation_dossier_photo(nom_dossier)
 
 # Attente du mode auto puis du mode stabilize
 print("Début de programme")
-drone.attente_stabilize_auto()  
-
 
 # Boucle d'attente de la commande "SERVO_OUTPUT_RAW"
 try:
-    while True:
+    while boolean:
+        print("En attente de la consigne d'atterrissage")
+        sleep(1)
+    drone.set_mode("GUIDED")
+    while drone.get_mode() != "GUIDED":
         pass
+    print("Atterrissage")
+    try: 
+        drone.atterrissage_aruco_fonctionnel(chemin_dossier)
+    except Exception as e:
+        print(e)
+    finally:
+        sys.exit(0)
 except KeyboardInterrupt:
     print("Fin de programme")

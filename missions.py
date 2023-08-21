@@ -12,7 +12,7 @@ drone = Drone()
 def listener(self, name, message):
 
     # Condition de déclenchement de la manoeuvre d'atterissage
-    if message.servo10_raw == 1350:
+    if int(message.servo10_raw) == 1350:
         
         # Passage et attente en mode "GUIDED"    
         self.set_mode("GUIDED")
@@ -30,12 +30,12 @@ def listener(self, name, message):
 
 
 # Choix de la mission
-numero_mission = input("Quel mission voulez-vous lancer ?\n"+
+numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
       "1) Cartographie\n" + 
       "2) L'inspection dynamique\n" + 
       "3) Identification de l'état des randonneurs\n" +
       "4) Asservissement sur aruco\n" +
-      "5) Arrêt du programme") 
+      "5) Arrêt du programme"))
 while numero_mission not in [1,2,3,4,5]:
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
