@@ -83,6 +83,14 @@ def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, 
         return sqrt(dist_x**2+dist_y**2), atan2(dist_y, dist_x)
 
 
+# Fonction permettant de récupérer les coordonnées GPS d'un objet à partir des coordonnées X,Y d'une image
+def get_GPS_through_picture(drone, X, Y):
+    distance_vision, angle_vision = get_distance_angle_picture(drone.camera.x_imageCenter, drone.camera.y_imageCenter,
+                                                                X, Y,
+                                                                drone.vehicle.rangefinder.distance, drone.camera.dist_coeff_x, drone.camera.dist_coeff_y)
+    current_location = LocationGlobalRelative(drone.vehicle.location.global_frame.lat, drone.vehicle.location.global_frame.lon, 0)
+    estimated_location = get_GPS_location(current_location, drone.vehicle.attitude.yaw + angle_vision, distance_vision)
+    return estimated_location
 
 
 # Décorateur permettant d'afficher le temps d'excécution d'une fonction 
