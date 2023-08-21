@@ -10,6 +10,13 @@ drone = Drone()
 # Listerner déclanchant la manoeuvre d'atterissage
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
+
+    # Passage et attente en mode "GUIDED"    
+    self.set_mode("GUIDED")
+    while self.get_mode() != "GUIDED":
+        pass
+
+    # Début de la manoeuvre d'atterissage
     print("Début de la manoeuvre d'atterissage")
     try:
         drone.atterrissage_aruco_fonctionnel(chemin_dossier)
