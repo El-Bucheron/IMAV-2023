@@ -322,6 +322,8 @@ class Drone:
                 vz = 1
             elif altitude > 2:
                 vz = 0.5
+            else:
+                vz = 0
         
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
