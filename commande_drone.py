@@ -320,7 +320,7 @@ class Drone:
                 vz = 1.5 
             elif altitude > 5:
                 vz = 1
-            elif altitude > 2:
+            elif altitude > 1.5:
                 vz = 0.5
             else:
                 vz = 0
@@ -392,7 +392,7 @@ class Drone:
         
         # Tant que le drone n'est pas à 2 m du sol ou que le temps écoulé est inférieur à 30 secondes, 
         # on lance l'asservissement du drone
-        while altitude > 2 and (start_time-time.time()) < 30000:
+        while altitude > 1.5 and (start_time-time.time()) < 30000:
             
             # Récupération de l'altitude du drone
             altitude = self.vehicle.rangefinder.distance
