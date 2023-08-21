@@ -392,7 +392,7 @@ class Drone:
         
         # Tant que le drone n'est pas à 2 m du sol ou que le temps écoulé est inférieur à 30 secondes, 
         # on lance l'asservissement du drone
-        while altitude > 2 or (start_time-time.time()) < 30000:
+        while altitude > 2 and (start_time-time.time()) < 30000:
             
             # Récupération de l'altitude du drone
             altitude = self.vehicle.rangefinder.distance
