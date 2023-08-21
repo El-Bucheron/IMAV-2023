@@ -35,7 +35,7 @@ numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
       "2) L'inspection dynamique\n" + 
       "3) Identification de l'état des randonneurs\n" +
       "4) Asservissement sur aruco\n" +
-      "5) Arrêt du programme"))
+      "5) Arrêt du programme")) 
 while numero_mission not in [1,2,3,4,5]:
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
