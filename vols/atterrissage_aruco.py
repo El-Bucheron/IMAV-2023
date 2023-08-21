@@ -14,22 +14,27 @@ from datetime import datetime
 #Instanciation de l'objet drone
 drone = Drone()
 
+
 # Listerner déclanchant la manoeuvre d'atterissage
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
 
-    # Passage et attente en mode "GUIDED"    
-    self.set_mode("GUIDED")
-    while self.get_mode() != "GUIDED":
-        pass
+    # Condition de déclenchement de la manoeuvre d'atterissage
+    if message.servo10_raw == 1350:
+        
+        # Passage et attente en mode "GUIDED"    
+        self.set_mode("GUIDED")
+        while self.get_mode() != "GUIDED":
+            pass
 
-    print("Début de la manoeuvre d'atterissage")
-    try:
-        drone.atterrissage_aruco_fonctionnel(chemin_dossier)
-    except Exception as e:
-        print(e)
-    finally:
-        sys.exit(0) 
+        # Atterrissage
+        print("Début de la manoeuvre d'atterissage")
+        try:
+            drone.atterrissage_aruco_fonctionnel(chemin_dossier)
+        except Exception as e:
+            print(e)
+        finally:
+            sys.exit(0) 
       
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
