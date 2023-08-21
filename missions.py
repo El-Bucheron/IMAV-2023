@@ -11,19 +11,22 @@ drone = Drone()
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
 
-    # Passage et attente en mode "GUIDED"    
-    self.set_mode("GUIDED")
-    while self.get_mode() != "GUIDED":
-        pass
+    # Condition de déclenchement de la manoeuvre d'atterissage
+    if message.servo10_raw == 1350:
+        
+        # Passage et attente en mode "GUIDED"    
+        self.set_mode("GUIDED")
+        while self.get_mode() != "GUIDED":
+            pass
 
-    # Début de la manoeuvre d'atterissage
-    print("Début de la manoeuvre d'atterissage")
-    try:
-        drone.atterrissage_aruco_fonctionnel(chemin_dossier)
-    except Exception as e:
-        print(e)
-    finally:
-        sys.exit(0) 
+        # Atterrissage
+        print("Début de la manoeuvre d'atterissage")
+        try:
+            drone.atterrissage_aruco_fonctionnel(chemin_atterrissage)
+        except Exception as e:
+            print(e)
+        finally:
+            sys.exit(0) 
 
 
 # Choix de la mission
@@ -43,11 +46,13 @@ if numero_mission == 1:
     print("Début de la cartographie")
 
     #Création des dossiers de prises de photos
-    chemin_dossier = creation_dossier_photo("Planification dynamique")
+    chemin_dossier = creation_dossier_photo("Planification dynamique : " + datetime.now().strftime("%d-%m %H:%M:%S"))
     chemin_carto = os.path.join(chemin_dossier, "cartographie")
     chemin_carre_bleu = os.path.join(chemin_dossier, "carre_bleu")
+    chemin_atterrissage = os.path.join(chemin_dossier, "atterrisssage")
     os.mkdir(chemin_carto)
     os.mkdir(chemin_carre_bleu)
+    os.mkdir(chemin_atterrissage)
 
 
     try:
