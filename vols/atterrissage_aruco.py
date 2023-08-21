@@ -24,6 +24,7 @@ boolean = True
 def listener(self, name, message):
     # Condition de déclenchement de la manoeuvre d'atterissage
     if int(message.servo10_raw) == 1350:
+        global boolean 
         boolean = False
     print(boolean)
 
