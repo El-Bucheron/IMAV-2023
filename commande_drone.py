@@ -29,8 +29,8 @@ class Drone:
         self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
         self.kd_atterrissage = 0.0002  # 0.00001 working "fine" for both
         self.ki_atterrissage = 0.000001  # 0.0000001
-        self.coefficient_kp_atterrissage = 1
-        self.offset_camera_atterrissage = 170
+        self.coefficient_kp_atterrissage = 0.5
+        self.offset_camera_atterrissage = 0
         self.coef_vx_atterrissage = 1
         self.coef_vy_atterrissage = 1
 
@@ -60,6 +60,14 @@ class Drone:
         self.vehicle = connect('/dev/ttyACM0', wait_ready=True, baud=57600, heartbeat_timeout=2)
         self.camera = Detection()
         print("Connexion et initialisation terminées")
+
+        msg = self.vehicle.message_factory.command_long_encode(0, 0,  # target_system, target_component
+                                                      mavutil.mavlink.MAV_CMD_DO_SET_SERVO,  # command
+                                                      0,  # confirmation
+                                                      10,  # servo number
+                                                      1900,  # servo position between 1000 ferme and 2000
+                                                      0, 0, 0, 0, 0)  # param 3 ~ 7 not used
+        self.vehicle.send_mavlink(msg)
 
 
     #set_mode - set the mode of the vehicle as long as we are in control
