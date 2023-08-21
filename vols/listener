@@ -1,0 +1,26 @@
+# Code permettant d'importer la classe "Drone"
+import os
+import sys
+package_path = os.getcwd()
+while package_path[-9:] != "IMAV_2023":
+    package_path = os.path.dirname(package_path)
+sys.path.insert(0, package_path)
+
+from commande_drone import *
+from time import sleep
+
+# Création de l'objet drone
+drone = Drone()
+
+# Listerner déclanchant la manoeuvre d'atterissage
+@drone.vehicle.on_message('SERVO_OUTPUT_RAW')
+def listener(self, name, message):
+    print('Commande "SERVO_OUTPUT_RAW" recue')
+
+# Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
+try:
+    while True:
+        print("Aucune consigne recue")
+        sleep(1)
+except KeyboardInterrupt:
+    print("Interruption de programme")
