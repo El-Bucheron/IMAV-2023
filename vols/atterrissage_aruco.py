@@ -16,15 +16,16 @@ from time import sleep
 #Instanciation de l'objet drone
 drone = Drone()
 
+global boolean
 boolean = True
 
 # Listerner déclanchant la manoeuvre d'atterissage
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
     # Condition de déclenchement de la manoeuvre d'atterissage
-    print(message.servo10_raw)
     if int(message.servo10_raw) == 1350:
         boolean = False
+    print(boolean)
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
