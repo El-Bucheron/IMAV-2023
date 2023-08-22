@@ -20,8 +20,8 @@ class Detection:
         #--------------- Resolution ---------------------------
         # Focal length and sensors dimensions for Pi camera
         # See: https://www.raspberrypi.com/documentation/accessories/camera.html 
-        self.horizontal_res = 1280   # Horizontal resolution (x dimension) [px] 
-        self.vertical_res = 960    # Vertical resolution (y dimension) [px]
+        self.horizontal_res = 640   # Horizontal resolution (x dimension) [px] 
+        self.vertical_res = 480    # Vertical resolution (y dimension) [px]
         focal_length = 3.60   # Focal length [mm]
         sensor_length = 3.76  # Sensor length (x dimension) [mm]
         sensor_height = 2.74  # Sensor length (y dimension) [mm]  
