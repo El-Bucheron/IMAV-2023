@@ -125,13 +125,14 @@ elif numero_mission == 3:
 # Asservissement
 elif numero_mission == 4:
 
+    altitude = 20
     # Attente du mode stabilize puis du mode auto
     drone.attente_stabilize_auto()
     # Décollage
-    drone.arm_and_takeoff(20)
+    drone.arm_and_takeoff(altitude)
     #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
     #drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
-    drone.goto(LocationGlobalRelative(48.7065019, 7.7343884, 25), 0.5)
+    drone.goto(LocationGlobalRelative(48.7065019, 7.7343884, altitude), 0.5)
 
     chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
     while True:
