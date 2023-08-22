@@ -302,8 +302,8 @@ class Drone:
         vx = self.kp_atterrissage * erreurX + self.kd_atterrissage * erreurDeriveeX + self.ki_atterrissage * self.erreurIntegraleX_atterrissage
         vy = self.kp_atterrissage * erreurY + self.kd_atterrissage * erreurDeriveeY + self.ki_atterrissage * self.erreurIntegraleY_atterrissage        
         # Correction en fonction de l'angle 
-        vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_atterrissage)
-        vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_atterrissage)
+        #vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_atterrissage)
+        #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_atterrissage)
         # Bornage des vitesses à +/- 5 m/s
         vx = -min(max(vx, -5.0), 5.0)
         vy = min(max(vy, -5.0), 5.0)
