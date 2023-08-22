@@ -242,8 +242,8 @@ class Drone:
         vx = self.kp_suivi_vehicule * erreurX + self.kd_suivi_vehicule * erreurDeriveeX + self.ki_suivi_vehicule * self.erreurIntegraleX_suivi_vehicule
         vy = self.kp_suivi_vehicule * erreurY + self.kd_suivi_vehicule * erreurDeriveeY + self.ki_suivi_vehicule * self.erreurIntegraleY_suivi_vehicule        
         # Correction en fonction de l'angle 
-        vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_suivi_vehicule)
-        vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
+        #vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_suivi_vehicule)
+        #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
         # Bornage des vitesses à +/- 17.5 m/s
         vx = -min(max(vx, -17.5), 17.5)
         vy = min(max(vy, -17.5), 17.5)

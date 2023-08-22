@@ -29,8 +29,9 @@ from utilities import creation_dossier_photo, enregistrement_photo_date_position
 #Instanciation de l'objet drone
 drone = Drone()
 drone.attente_stabilize_auto()
-drone.takeoff(20)
+drone.takeoff(25)
 sleep(2)
+drone.goto
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  
