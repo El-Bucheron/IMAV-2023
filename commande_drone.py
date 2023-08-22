@@ -47,6 +47,9 @@ class Drone:
         self.offset_camera_suivi_vehicule = 0
         self.coef_vx_suivi_vehicule = 1
         self.coef_vy_suivi_vehicule = 1
+        self.compteur_non_detection = 0
+        self.stored_vx = 0
+        self.stored_vy = 0
         
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
         self.erreurIntegraleX_suivi_vehicule = 0
@@ -209,7 +212,12 @@ class Drone:
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
-            return None, None, None, None
+            self.compteur_non_detection += 1
+            if self.compteur_non_detection >= 5:
+                return None, None, None, None
+            self.set_velocity(self.stored_vy, self.stored_vx, 0)
+            return None, None, self.stored_vx, self.stored_vy
+
         
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -251,6 +259,9 @@ class Drone:
         #Envoie de la consigne de vitesse au drone
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))
         self.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
+        self.compteur_non_detection = 0
+        self.stored_vx = vx
+        self.stored_vy = vy
         return erreurX, erreurY, vx, vy
 
 
