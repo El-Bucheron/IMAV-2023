@@ -133,7 +133,7 @@ elif numero_mission == 4:
     #drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
     drone.goto(LocationGlobalRelative(48.7065019, 7.7343884, 25), 0.5)
 
-    chemin_dossier = creation_dossier_photo("Suivi de véhicule")
+    chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
     while True:
         # Détection de l'aruco
         aruco_center_x, aruco_center_y, _, image = drone.camera.detection_aruco(True)
