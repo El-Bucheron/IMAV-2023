@@ -125,7 +125,7 @@ elif numero_mission == 3:
 # Asservissement
 elif numero_mission == 4:
 
-    altitude = 25
+    altitude = 15
     # Attente du mode stabilize puis du mode auto
     drone.attente_stabilize_auto()
     # Décollage
