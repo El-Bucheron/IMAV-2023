@@ -41,9 +41,9 @@ class Drone:
         self.erreurAnterieureY_atterrissage = 0
 
         # Coefficients de l'asservissement PID du suivi de véhicule
-        self.kp_suivi_vehicule = 0.0125*1.25
-        self.kd_suivi_vehicule = 0.000125  # 0.00001 working "fine" for both
-        self.ki_suivi_vehicule = 0.0000001 #0.000002
+        self.kp_suivi_vehicule = 0.0125
+        self.kd_suivi_vehicule = 0.000125*5  # 0.00001 working "fine" for both
+        self.ki_suivi_vehicule = 0.000002 #0.0000001
         self.offset_camera_suivi_vehicule = 0
         self.coef_vx_suivi_vehicule = 1
         self.coef_vy_suivi_vehicule = 1
