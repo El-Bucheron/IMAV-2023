@@ -160,6 +160,7 @@ elif numero_mission == 5:
 elif numero_mission == 6:
     tracker = cv2.TrackerCSRT_create()
     bbox = (0,0,0,0)
+    taille_carré = 75
     
     altitude = 25
     # Attente du mode stabilize puis du mode auto
@@ -176,7 +177,7 @@ elif numero_mission == 6:
         aruco_center_x, aruco_center_y, _, image = drone.camera.detection_aruco(True)
         print(("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) if aruco_center_x != None else "Aruco non détecté")
         if aruco_center_x != None :
-           bbox =(aruco_center_x-50,aruco_center_y-50,100,100)
+           bbox =(aruco_center_x-int(taille_carré/2),aruco_center_y-int(taille_carré/2), taille_carré, taille_carré)
            ok = tracker.init(image, bbox)
            break
     
