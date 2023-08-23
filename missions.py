@@ -184,10 +184,10 @@ elif numero_mission == 6:
 
     while True:
 
-        start_time = time.time()
-
         image = drone.camera.prise_photo()
+        start_time = time.time()
         ok, bbox = tracker.update(image)
+        print(str(time.time()-start_time))
         
         if ok:
             p1 = (int(bbox[0]), int(bbox[1]))
@@ -197,16 +197,14 @@ elif numero_mission == 6:
         bbox_center_x = int(bbox[0]+bbox[2]/2) if ok else None
         bbox_center_y = int(bbox[1]+bbox[3]/2) if ok else None
 
-        print("Coordonnées du centre : X =" + str(bbox_center_x) + " ; Y = " + str(bbox_center_y))
+        print("Coordonnées du centre : X = " + str(bbox_center_x) + " ; Y = " + str(bbox_center_y))
         
         # Asservissement par rapport au centre de l'aruco
-        #erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(bbox_center_x, bbox_center_y)      
+        erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(bbox_center_x, bbox_center_y)      
         # Affichage de l'erreur et de la vitesse
-        #image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-        #image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
+        image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
         # Traçage d'un cercle au centre de l'image
-        #cv2.circle(image, (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 4, (0, 255, 0), -1)
+        cv2.circle(image, (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 4, (0, 255, 0), -1)
         # Sauvegarde de la photo
         enregistrement_photo_date_position(drone, image, chemin_dossier, "yes" if bbox_center_x != None else "no")
-
-        print(str(time.time()-start_time))

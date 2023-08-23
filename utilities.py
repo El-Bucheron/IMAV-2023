@@ -103,7 +103,7 @@ def get_excecution_time(function):
         # Stockage du temps de fin de la fonction
         end_time = time.time()
         # Affichage du temps de calcul
-        print(f'Temps d\'excécution "{function.__name__}" : {end_time-start_time:.4f} ms')
+        print(f'Temps d\'excécution "{function.__name__}" : {end_time-start_time:.4f} s')
         # revoi du résultat de la fonction appelée
         return result
     return timer 

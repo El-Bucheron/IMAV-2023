@@ -75,7 +75,6 @@ class Detection:
 
 
     # Fonction permettant de prendre une photo avec la camera
-    @get_excecution_time
     def prise_photo(self):
         photo = np.empty((self.vertical_res * self.horizontal_res * 3), dtype=np.uint8)
         # Prise de la photo
