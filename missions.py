@@ -35,8 +35,9 @@ numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
       "2) L'inspection dynamique\n" + 
       "3) Identification de l'état des randonneurs\n" +
       "4) Asservissement sur aruco\n" +
-      "5) Arrêt du programme")) 
-while numero_mission not in [1,2,3,4,5]:
+      "5) Arrêt du programme" +
+      "4) Asservissement et tracking test sur aruco\n"))
+while numero_mission not in [1,2,3,4,5,6]:
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
 
@@ -154,3 +155,47 @@ elif numero_mission == 4:
 # Arrêt du programme
 elif numero_mission == 5:
     sys.exit(0)
+    
+# Asservissement test tracking
+elif numero_mission == 6:
+    tracker = cv2.TrackerCSRT_create()
+    bbox = (0,0,0,0)
+    
+    altitude = 25
+    # Attente du mode stabilize puis du mode auto
+    drone.attente_stabilize_auto()
+    # Décollage
+    drone.arm_and_takeoff(altitude)
+    #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
+    #drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
+    drone.goto(LocationGlobalRelative(48.7065019, 7.7343884, altitude), 0.5)
+    chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
+    while True:
+        # Détection de l'aruco
+        aruco_center_x, aruco_center_y, _, image = drone.camera.detection_aruco(True)
+        print(("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) if aruco_center_x != None else "Aruco non détecté")
+        if aruco_center_x != None :
+           bbox =(aruco_center_x-50,aruco_center_y-50,100,100)
+           ok = tracker.init(image, bbox)
+          break
+    while True:
+        image = drone.camera.prise_photo()
+        ok, bbox = tracker.update(image)
+        bbox_center_x = int(bbox[0]+bbox[2]/2)
+        bbox_center_y = int(bbox[1]+bbox[3]/2)
+        
+        if ok:
+            p1 = (int(bbox[0]), int(bbox[1]))
+            p2 = (int(bbox[0] + bbox[2]),
+                  int(bbox[1] + bbox[3]))
+            cv2.rectangle(image, p1, p2, (0, 0, 255), 2, 2)
+        
+        # Asservissement par rapport au centre de l'aruco
+        erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(bbox_center_x, bbox_center_y)      
+        # Affichage de l'erreur et de la vitesse
+        image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+        image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
+        # Traçage d'un cercle au centre de l'image
+        cv2.circle(image, (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 4, (0, 255, 0), -1)
+        # Sauvegarde de la photo
+        enregistrement_photo_date_position(drone, image, chemin_dossier, "yes" if bbox_center_x != None else "no")
