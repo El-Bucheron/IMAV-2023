@@ -160,7 +160,7 @@ elif numero_mission == 5:
 elif numero_mission == 6:
     tracker = cv2.TrackerCSRT_create()
     bbox = (0,0,0,0)
-    taille_carré = 75
+    taille_carré = 100
     
     altitude = 25
     # Attente du mode stabilize puis du mode auto
@@ -186,9 +186,7 @@ elif numero_mission == 6:
     while True:
 
         image = drone.camera.prise_photo()
-        start_time = time.time()
         ok, bbox = tracker.update(image)
-        print(str(time.time()-start_time))
         
         if ok:
             p1 = (int(bbox[0]), int(bbox[1]))
