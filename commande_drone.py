@@ -64,12 +64,13 @@ class Drone:
         self.camera = Detection()
         print("Connexion et initialisation terminées")
 
+        # Envoi de consigne de servo pour la condition d'atterrissage
         msg = self.vehicle.message_factory.command_long_encode(0, 0,  # target_system, target_component
-                                                      mavutil.mavlink.MAV_CMD_DO_SET_SERVO,  # command
-                                                      0,  # confirmation
-                                                      10,  # servo number
-                                                      1900,  # servo position between 1000 ferme and 2000
-                                                      0, 0, 0, 0, 0)  # param 3 ~ 7 not used
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,  # command
+            0,  # confirmation
+            10,  # servo number
+            1900,  # servo position between 1000 ferme and 2000
+            0, 0, 0, 0, 0)  # param 3 ~ 7 not used
         self.vehicle.send_mavlink(msg)
 
 
