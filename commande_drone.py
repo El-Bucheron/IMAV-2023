@@ -43,7 +43,7 @@ class Drone:
         # Coefficients de l'asservissement PID du suivi de véhicule
         self.kp_suivi_vehicule = 0.0125/2.0
         self.kd_suivi_vehicule = 0 # 0.000125*5
-        self.ki_suivi_vehicule = 0 # 0.000002
+        self.ki_suivi_vehicule = 0.000002
         self.offset_camera_suivi_vehicule = 0
         self.coef_vx_suivi_vehicule = 1
         self.coef_vy_suivi_vehicule = 1
