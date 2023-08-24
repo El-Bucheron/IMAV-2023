@@ -233,10 +233,9 @@ class Drone:
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
         # Si l'erreur selon x et y est inférieure à 10 pixels, on la considère comme nulle
-        if abs(erreurX) <= 10:  
-            erreurX = 0
-        if abs(erreurY) <= 10:
-            erreurY = 0
+        if dist_center < 100:
+            self.set_velocity(0, 0, 0)
+            return erreurX, erreurY, 0, 0
 
         # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
