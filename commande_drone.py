@@ -9,7 +9,7 @@ Created on 2022
 import cv2
 from time import sleep
 from math import atan2, cos, sin, sqrt, tan, radians
-from dronekit import connect, VehicleMode, LocationGlobalRelative
+from dronekit import connect, VehicleMode, LocationGlobalRelative, Locations
 from pymavlink import mavutil
 from utilities import *
 from detection_target import Detection
@@ -41,8 +41,8 @@ class Drone:
         self.erreurAnterieureY_atterrissage = 0
 
         # Coefficients de l'asservissement PID du suivi de véhicule
-        self.kp_suivi_vehicule = 0.0125/2.0
-        self.kd_suivi_vehicule = 0.000125*5
+        self.kp_suivi_vehicule = 0.0125
+        self.kd_suivi_vehicule = 0.000625
         self.ki_suivi_vehicule = 0.000002
         self.offset_camera_suivi_vehicule = 0
         self.coef_vx_suivi_vehicule = 1
@@ -57,7 +57,8 @@ class Drone:
         self.erreurAnterieureX_suivi_vehicule = 0
         self.erreurAnterieureY_suivi_vehicule = 0
 
-        self.previousGPSlocation = 0
+        self.previousLatitude = 0
+        self.previousLongitude = 0
 
         
         # Connexion au drone et initialisation de la caméra
@@ -255,8 +256,9 @@ class Drone:
         #vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_suivi_vehicule)
         #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
         vitesseDroneX, vitesseDroneY = self.calcul_vitesse_drone()
-        vitesseEstX = - (vitesseDroneX + vx * (1.0 if vx*vitesseDroneX > 0 else 4.0))
-        vitesseNordY = vitesseDroneY + vy * (1.0 if vy*vitesseDroneY > 0 else 4.0)
+        print(str(vx) + " " + str(vitesseDroneX) + " " + str(vy) + " " + str(vitesseDroneY))
+        vitesseEstX = vx * (1.0 if vx*vitesseDroneX > 0 else 1.5) + vitesseDroneX * (1.0 if vx*vitesseDroneX > 0 else 0.8)
+        vitesseNordY = vy * (1.0 if vy*vitesseDroneY > 0 else 1.5) + vitesseDroneY * (1.0 if vy*vitesseDroneY > 0 else 0.8)
         print("Vitesse vx : " + str(vx) + " ; vdx = " + str(vitesseDroneX) + " ; vy = " + str(vy) + " ; vdy = " + str(vitesseDroneY))
         
         #Envoie de la consigne de vitesse au drone
@@ -270,13 +272,13 @@ class Drone:
     def calcul_vitesse_drone(self):
         vitesseEstX = 0
         vitesseNordY = 0
-        if self.previousGPSlocation != 0:
+        if self.previousLatitude != 0:
             groundSpeed = self.vehicle.groundspeed
-            angle = atan2(self.vehicle.location._lat - self.previousGPSlocation._lat, self.vehicle.location._lon - self.previousGPSlocation._lon)
+            angle = atan2(self.vehicle.location._lat - self.previousLatitude, self.vehicle.location._lon - self.previousLongitude)
             vitesseEstX = groundSpeed * cos(angle)
-            vitesseNordY = groundSpeed * sin(angle)
-        self.previousGPSlocation = self.vehicle.location
-        print("vitesseEstX = " + str(vitesseEstX) + " ; vitesseNordY = " + str(vitesseNordY))
+            vitesseNordY = groundSpeed * sin(angle)         
+        self.previousLatitude = self.vehicle.location._lat
+        self.previousLongitude= self.vehicle.location._lon
         return vitesseEstX, vitesseNordY
 
 
