@@ -57,6 +57,8 @@ class Drone:
         self.erreurAnterieureX_suivi_vehicule = 0
         self.erreurAnterieureY_suivi_vehicule = 0
 
+        self.previousGPSlocation = 0
+
         
         # Connexion au drone et initialisation de la caméra
         print("Connexion au drone et initialisation de la caméra")
@@ -253,17 +255,28 @@ class Drone:
         # Correction en fonction de l'angle 
         #vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_suivi_vehicule)
         #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
-        # Bornage des vitesses à +/- 17.5 m/s
-        vx = -min(max(vx, -17.5), 17.5)
-        vy = min(max(vy, -17.5), 17.5)
+        vitesseDroneX, vitesseDroneY = self.calcul_vitesse_drone()
+        vitesseEstX = - vx - vitesseDroneX
+        vitesseNordY = vy + vitesseDroneY
         
         #Envoie de la consigne de vitesse au drone
-        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))
-        self.set_velocity(vy, vx, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
+        self.set_velocity(vitesseNordY, vitesseEstX, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
         self.compteur_non_detection = 0
-        self.stored_vx = vx
-        self.stored_vy = vy
-        return erreurX, erreurY, vx, vy
+        self.stored_vx = vitesseEstX
+        self.stored_vy = vitesseNordY
+        return erreurX, erreurY, vitesseEstX, vitesseNordY
+    
+
+    def calcul_vitesse_drone(self):
+        vitesseEstX = 0
+        vitesseNordY = 0
+        if self.previousGPSlocation != 0:
+            groundSpeed = self.vehicle.groundspeed
+            angle = atan2(self.vehicle.location.lat - self.previousGPSlocation.lat, self.vehicle.location.lon - self.previousGPSlocation.lon)
+            vitesseEstX = groundSpeed * cos(angle)
+            vitesseNordY = groundSpeed * sin(angle)
+        self.previousGPSlocation = self.vehicle.location
+        return vitesseEstX, vitesseNordY
 
 
 

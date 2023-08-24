@@ -141,7 +141,9 @@ elif numero_mission == 4:
         aruco_center_x, aruco_center_y, _, image = drone.camera.detection_aruco(True)
         print(("Aruco trouvé de centre X = " + str(aruco_center_x) + " ; Y = " + str(aruco_center_y)) if aruco_center_x != None else "Aruco non détecté")
         # Asservissement par rapport au centre de l'aruco
-        erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(aruco_center_x, aruco_center_y)      
+        erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(aruco_center_x, aruco_center_y) 
+        print("Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
+        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))     
         # Affichage de l'erreur et de la vitesse
         image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
         image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
