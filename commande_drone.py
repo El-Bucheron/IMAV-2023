@@ -233,7 +233,7 @@ class Drone:
         erreurX = dist_center * cos(alpha)
         erreurY = dist_center * sin(alpha)
         # Si l'erreur selon x et y est inférieure à 10 pixels, on la considère comme nulle
-        if dist_center < 100:
+        if dist_center < 50:
             self.set_velocity(0, 0, 0)
             return erreurX, erreurY, 0, 0
 
