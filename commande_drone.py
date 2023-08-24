@@ -256,7 +256,7 @@ class Drone:
         #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
         vitesseDroneX, vitesseDroneY = self.calcul_vitesse_drone()
         vitesseEstX = - (vitesseDroneX + vx * (1.0 if vx*vitesseDroneX > 0 else 2.0))
-        vitesseNordY = vitesseDroneY + vy * (1.0 if vx*vitesseDroneX > 0 else 2.0)
+        vitesseNordY = vitesseDroneY + vy * (1.0 if vy*vitesseDroneY > 0 else 2.0)
         
         #Envoie de la consigne de vitesse au drone
         self.set_velocity(vitesseNordY, vitesseEstX, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
