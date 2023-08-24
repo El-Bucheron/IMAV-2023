@@ -272,7 +272,7 @@ class Drone:
         vitesseNordY = 0
         if self.previousGPSlocation != 0:
             groundSpeed = self.vehicle.groundspeed
-            angle = atan2(self.vehicle.location.lat - self.previousGPSlocation.lat, self.vehicle.location.lon - self.previousGPSlocation.lon)
+            angle = atan2(self.vehicle.location._lat - self.previousGPSlocation._lat, self.vehicle.location._lon - self.previousGPSlocation._lon)
             vitesseEstX = groundSpeed * cos(angle)
             vitesseNordY = groundSpeed * sin(angle)
         self.previousGPSlocation = self.vehicle.location
