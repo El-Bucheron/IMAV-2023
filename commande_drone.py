@@ -257,6 +257,7 @@ class Drone:
         vitesseDroneX, vitesseDroneY = self.calcul_vitesse_drone()
         vitesseEstX = - (vitesseDroneX + vx * (1.0 if vx*vitesseDroneX > 0 else 2.0))
         vitesseNordY = vitesseDroneY + vy * (1.0 if vy*vitesseDroneY > 0 else 2.0)
+        print("Vitesse vx : " + str(vx) + " ; vdx = " + str(vitesseDroneX) + " ; vy = " + str(vy) + " ; vdy = " + str(vitesseDroneY))
         
         #Envoie de la consigne de vitesse au drone
         self.set_velocity(vitesseNordY, vitesseEstX, 0) # Pour le sense de la camera, X pointe vers l'est et Y vers le nord
