@@ -255,8 +255,8 @@ class Drone:
         #vx *= abs(cos(self.vehicle.attitude.roll) ** self.coef_vx_suivi_vehicule)
         #vy *= abs(cos(self.vehicle.attitude.pitch) ** self.coef_vy_suivi_vehicule)
         vitesseDroneX, vitesseDroneY = self.calcul_vitesse_drone()
-        vitesseEstX = - (vitesseDroneX + vx * (1.0 if vx*vitesseDroneX > 0 else 2.0))
-        vitesseNordY = vitesseDroneY + vy * (1.0 if vy*vitesseDroneY > 0 else 2.0)
+        vitesseEstX = - (vitesseDroneX + vx * (1.0 if vx*vitesseDroneX > 0 else 4.0))
+        vitesseNordY = vitesseDroneY + vy * (1.0 if vy*vitesseDroneY > 0 else 4.0)
         print("Vitesse vx : " + str(vx) + " ; vdx = " + str(vitesseDroneX) + " ; vy = " + str(vy) + " ; vdy = " + str(vitesseDroneY))
         
         #Envoie de la consigne de vitesse au drone
@@ -276,6 +276,7 @@ class Drone:
             vitesseEstX = groundSpeed * cos(angle)
             vitesseNordY = groundSpeed * sin(angle)
         self.previousGPSlocation = self.vehicle.location
+        print("vitesseEstX = " + str(vitesseEstX) + " ; vitesseNordY = " + str(vitesseNordY))
         return vitesseEstX, vitesseNordY
 
 
