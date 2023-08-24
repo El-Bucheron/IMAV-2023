@@ -27,8 +27,8 @@ class Drone:
         
         # Coefficients de l'asservissement PID de l'atterrissage
         self.kp_atterrissage = 0 # Coefficient mis à 0 car initialisé plus tard
-        self.kd_atterrissage = 0.0002  # 0.00001 working "fine" for both
-        self.ki_atterrissage = 0.000001  # 0.0000001
+        self.kd_atterrissage = 0.0002
+        self.ki_atterrissage = 0.000001
         self.coefficient_kp_atterrissage = 0.5
         self.offset_camera_atterrissage = 0
         self.coef_vx_atterrissage = 1
@@ -42,8 +42,8 @@ class Drone:
 
         # Coefficients de l'asservissement PID du suivi de véhicule
         self.kp_suivi_vehicule = 0.0125/2.0
-        self.kd_suivi_vehicule = 0.000125*5  # 0.00001 working "fine" for both
-        self.ki_suivi_vehicule = 0.000002 #0.0000001
+        self.kd_suivi_vehicule = 0.000125*5
+        self.ki_suivi_vehicule = 0 # 0.000002
         self.offset_camera_suivi_vehicule = 0
         self.coef_vx_suivi_vehicule = 1
         self.coef_vy_suivi_vehicule = 1

@@ -202,7 +202,6 @@ elif numero_mission == 6:
         
         # Asservissement par rapport au centre de l'aruco
         erreurX, erreurY, vx, vy = drone.asservissement_suivi_vehicule_fonctionnel(bbox_center_x, bbox_center_y)
-        print("Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY))
         print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy))       
         # Affichage de l'erreur et de la vitesse
         image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
