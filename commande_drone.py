@@ -39,8 +39,8 @@ class Drone:
         self.erreurAnterieureY_atterrissage = 0
 
         # Coefficients de l'asservissement PID du suivi de véhicule
-        self.kp_suivi_vehicule = 0.0125/2.0
-        self.kd_suivi_vehicule = 0.000125*5
+        self.kp_suivi_vehicule = 0.0125
+        self.kd_suivi_vehicule = 0.000625
         self.ki_suivi_vehicule = 0.000002
         self.offset_camera_suivi_vehicule = 0
         self.compteur_non_detection = 0
@@ -53,7 +53,8 @@ class Drone:
         self.erreurAnterieureEst_suivi_vehicule = 0
         self.erreurAnterieureNord_suivi_vehicule = 0
 
-        self.previousGPSlocation = 0
+        self.previousLatitude = 0
+        self.previousLongitude = 0
 
         
         # Connexion au drone et initialisation de la caméra
@@ -246,13 +247,13 @@ class Drone:
     def calcul_vitesse_drone(self):
         vitesseEstX = 0
         vitesseNordY = 0
-        if self.previousGPSlocation != 0:
+        if self.previousLatitude != 0:
             groundSpeed = self.vehicle.groundspeed
-            angle = atan2(self.vehicle.location._lat - self.previousGPSlocation._lat, self.vehicle.location._lon - self.previousGPSlocation._lon)
+            angle = atan2(self.vehicle.location._lat - self.previousLatitude, self.vehicle.location._lon - self.previousLongitude)
             vitesseEstX = groundSpeed * cos(angle)
-            vitesseNordY = groundSpeed * sin(angle)
-        self.previousGPSlocation = self.vehicle.location
-        print("vitesseEstX = " + str(vitesseEstX) + " ; vitesseNordY = " + str(vitesseNordY))
+            vitesseNordY = groundSpeed * sin(angle)         
+        self.previousLatitude = self.vehicle.location._lat
+        self.previousLongitude= self.vehicle.location._lon
         return vitesseEstX, vitesseNordY
 
 
