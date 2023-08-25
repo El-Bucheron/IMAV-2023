@@ -1,7 +1,7 @@
 import os
-from detection_target import *
+from Detection import *
 from utilities import *
-from commande_drone import *
+from Drone import *
 
 # Création de l'objet drone
 drone = Drone()

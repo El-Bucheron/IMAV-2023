@@ -9,72 +9,41 @@ import time
 import os
 import cv2
 from dronekit import LocationGlobalRelative
-from math import asin, atan2, cos, degrees, radians, sin, sqrt, pi
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 from datetime import datetime
 
 R = 6371000 # Mean earth radius (meters)
 
+# Calcul la distance entre deux positions représentées par un objet de type "LocationGlobalRelative"
+# Détail de la formule : https://www.movable-type.co.uk/scripts/latlong.html
 def get_distance_metres(aLocation1, aLocation2):
-    """
-    Calculate distance in meters between Latitude/Longitude points.
-    
-    This uses the 'haversine' formula to calculate the great-circle
-    distance between two points - that is, the shortest distance over
-    the earth's surface earth's poles. More informations at:
-    https://www.movable-type.co.uk/scripts/latlong.html
-    """
     # Haversine formula to compute distance between two GPS points
-    targLat = aLocation1.lat
-    targLon = aLocation1.lon
-    realLat = aLocation2.lat
-    realLon = aLocation2.lon
-
-    phi_1 = radians(targLat)
-    phi_2 = radians(realLat)
-    delta_phi = radians(targLat-realLat)    # Latitude difference (radians)
-    delta_theta = radians(targLon-realLon)  # Longitude difference (radians)
+    phi_1 = radians(aLocation1.lat)
+    phi_2 = radians(aLocation2.lat)
+    delta_phi = radians(aLocation1.lat-aLocation2.lat)    # Latitude difference (radians)
+    delta_theta = radians(aLocation1.lon-aLocation2.lon)  # Longitude difference (radians)
     a = sin(delta_phi/2)**2 + cos(phi_1) * cos(phi_2) * sin(delta_theta/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    d = R * c
-
-    return d
+    return R * 2 * atan2(sqrt(a), sqrt(1-a))
 
 
-
+# Fonction retournant la position en ajoutant à la position "aLocation" une distance "distance" dans la direction pointée par l'angle "bearing"
+# Détail de la formule : https://www.movable-type.co.uk/scripts/latlong.html
 def get_GPS_location(aLocation, bearing, distance):
-    """
-    Calculate GPS target given distance and bearing from GPS start.
-
-    Given a start point, initial bearing, and distance, this will
-    calculate the destination point and travelling along a (shortest
-    distance) great circle arc. More informations at:
-    https://www.movable-type.co.uk/scripts/latlong.html
-    """
     # Inverse of Haversine
     phi_1 = radians(aLocation.lat)
     lambda_1 = radians(aLocation.lon)
     phi_2 = asin(sin(phi_1) * cos(distance/R) + cos(phi_1) * sin(distance/R) * cos(bearing))
-    lambda_2 = lambda_1 + atan2(sin(bearing) * sin(distance/R) * cos(phi_1), cos(distance/R) - sin(phi_1) * sin(phi_2))
-    
+    lambda_2 = lambda_1 + atan2(sin(bearing) * sin(distance/R) * cos(phi_1), cos(distance/R) - sin(phi_1) * sin(phi_2))  
     return LocationGlobalRelative(degrees(phi_2), degrees(lambda_2), 0)
 
 
-
+# Calcul la distance (en m) et l'angle d'un point [x_target_center, y_target_center] dans le repère cylindrique de centre [x_image_center, y_image_center]
 def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, y_target_center, altitude, dist_coeff_x, dist_coeff_y):
-    """
-    Calculate distance between two objects in a picture.
-
-    Distances on x and y axes are dependant from sensor sizes and
-    resolutions (which implies two different coefficients for each
-    axis). More informations at:
-    https://photo.stackexchange.com/questions/102795/calculate-the-distance-of-an-object-in-a-picture
-    """
-    if x_target_center == None:
-        return None
-    else:
-        dist_x = altitude*(x_target_center - x_image_center)*dist_coeff_x
-        dist_y = altitude*(y_target_center - y_image_center)*dist_coeff_y
-        return sqrt(dist_x**2+dist_y**2), atan2(dist_y, dist_x)
+    # Conversion de l'écart en pixels en distance en mètres selon l'axe X et Y de la caméra
+    distance_metre_x = altitude*(x_target_center - x_image_center)*dist_coeff_x
+    distance_metre_y = altitude*(y_target_center - y_image_center)*dist_coeff_y
+    # Conversion et retour des coordonnées polaires de l'objet
+    return sqrt(distance_metre_x**2+distance_metre_y**2), atan2(distance_metre_x, distance_metre_y)
 
 
 # Fonction permettant de récupérer les coordonnées GPS d'un objet à partir des coordonnées X,Y d'une image
@@ -84,8 +53,8 @@ def get_GPS_through_picture(drone, X, Y):
         X, Y,
         drone.vehicle.rangefinder.distance, drone.camera.dist_coeff_x, drone.camera.dist_coeff_y)
     current_location = LocationGlobalRelative(drone.vehicle.location.global_frame.lat, drone.vehicle.location.global_frame.lon, 0)
-    estimated_location = get_GPS_location(current_location, drone.vehicle.attitude.yaw + angle_vision, distance_vision)
-    return estimated_location
+    return get_GPS_location(current_location, drone.vehicle.attitude.yaw + angle_vision, distance_vision)
+
 
 
 # Décorateur permettant d'afficher le temps d'excécution d'une fonction 

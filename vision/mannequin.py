@@ -7,11 +7,9 @@ while package_path[-9:] != "IMAV_2023":
 sys.path.insert(0, package_path)
 
 # Imports
-import cv2
-from math import cos, sin, pi
 from time import sleep
 from datetime import datetime
-from commande_drone import Drone
+from Drone import Drone
 from utilities import creation_dossier_photo, enregistrement_photo_date_position
 
 # Connexion au drone

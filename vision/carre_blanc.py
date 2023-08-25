@@ -9,7 +9,7 @@ sys.path.insert(0, package_path)
 # Imports
 import cv2
 from utilities import creation_dossier_photo, enregistrement_photo_date_position
-from commande_drone import Drone
+from Drone import Drone
 from time import sleep
 from datetime import datetime
 

@@ -9,7 +9,7 @@ sys.path.insert(0, package_path)
 # Imports
 from time import sleep
 from datetime import datetime
-from commande_drone import Drone
+from Drone import Drone
 from utilities import creation_dossier_photo, enregistrement_photo_date_position
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un

@@ -8,7 +8,7 @@ sys.path.insert(0, package_path)
 
 # Imports
 from time import sleep
-from commande_drone import Drone
+from Drone import Drone
 from utilities import *
 
 drone = Drone()

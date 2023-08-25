@@ -8,7 +8,7 @@ sys.path.insert(0, package_path)
 
 # Imports
 from utilities import creation_dossier_photo
-from commande_drone import Drone
+from Drone import Drone
 from time import sleep
 from datetime import datetime
 
@@ -35,7 +35,7 @@ try:
     chemin_dossier = creation_dossier_photo(nom_dossier)
 
     print("Début de la manoeuvre d'atterissage")
-    drone.atterrissage_aruco_fonctionnel(chemin_dossier)  
+    drone.atterrissage_aruco(chemin_dossier)  
 
 except KeyboardInterrupt:
     print("Fin de programme")

@@ -9,7 +9,7 @@ sys.path.insert(0, package_path)
 
 # Imports
 from utilities import creation_dossier_photo
-from commande_drone import Drone
+from Drone import Drone
 from datetime import datetime
 from time import sleep
 
@@ -51,7 +51,7 @@ try:
         pass
     print("Atterrissage")
     try: 
-        drone.atterrissage_aruco_fonctionnel(chemin_dossier)
+        drone.atterrissage_aruco(chemin_dossier)
     except Exception as e:
         print(e)
     finally:

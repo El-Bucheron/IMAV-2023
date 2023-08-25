@@ -8,11 +8,11 @@ Created on 2022
 
 import cv2
 from time import sleep
-from math import atan2, cos, sin, sqrt, tan, radians
+from math import atan2, cos, sin, sqrt
 from dronekit import connect, VehicleMode
 from pymavlink import mavutil
 from utilities import *
-from detection_target import Detection
+from Detection import Detection
 
 
 
@@ -33,10 +33,10 @@ class Drone:
         self.offset_camera_atterrissage = 0
 
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
-        self.erreurIntegraleX_atterrissage = 0
-        self.erreurIntegraleY_atterrissage = 0
-        self.erreurAnterieureX_atterrissage = 0
-        self.erreurAnterieureY_atterrissage = 0
+        self.erreurIntegraleEst_atterrissage = 0
+        self.erreurIntegraleNord_atterrissage = 0
+        self.erreurAnterieureEst_atterrissage = 0
+        self.erreurAnterieureNord_atterrissage = 0
 
         # Coefficients de l'asservissement PID du suivi de véhicule
         self.kp_suivi_vehicule = 0.0125
@@ -55,6 +55,10 @@ class Drone:
 
         self.previousLatitude = 0
         self.previousLongitude = 0
+        self.previousCarPosition = None
+        self.currentCarPosition = None
+        self.previousMeasuredTime = None
+        self.currentMeasuredTime = None
 
         
         # Connexion au drone et initialisation de la caméra
@@ -123,16 +127,6 @@ class Drone:
             pass
 
 
-    # Fonction déplaçant le drone à la position GPS fournie en argument
-    def goto_2(self, targetLocation, distanceAccuracy):
-        # Ordre de déplacement du drone
-        self.vehicle.simple_goto(targetLocation)
-        # On attend que le drone soit arrivé assez près du point 
-        # car la fonction "simple_goto" ne bloque pas le déroulement du programme 
-        while get_distance_metres(self.vehicle.location.global_relative_frame, targetLocation) > distanceAccuracy:
-            pass
-
-
     # Décollage du drone jusqu'à la distance fournie en argument
     def arm_and_takeoff(self, aTargetAltitude):
         """
@@ -164,6 +158,24 @@ class Drone:
                 print("Reached target altitude")
                 break
             sleep(1)
+
+
+    def goto(self, targetLocation, distanceAccuracy):
+        # Simple goto DroneKit function
+        self.vehicle.simple_goto(targetLocation)
+
+        # Stop action if we are no longer in GUIDED mode
+        while self.vehicle.mode.name == "GUIDED": 
+            currentLocation = self.vehicle.location.global_relative_frame
+            remainingDistance = get_distance_metres(currentLocation, targetLocation)
+            print ("[mission] Distance to the GPS target: ", remainingDistance)
+            # print("Distance to the GPS target: %.2fm" % d)
+
+            # If the distance to the target verifies the distance accuracy
+            if remainingDistance <= distanceAccuracy:
+                print("[mission] Reached GPS target!")
+                break  # Then break the waiting loop
+            sleep(1)
                   
    
     # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant 0.1 seconde 
@@ -184,23 +196,6 @@ class Drone:
         # Temporisation de 0.1 seconde
         sleep(0.1)
 
-                       
-    def goto(self, targetLocation, distanceAccuracy):
-        # Simple goto DroneKit function
-        self.vehicle.simple_goto(targetLocation)
-
-        # Stop action if we are no longer in GUIDED mode
-        while self.vehicle.mode.name == "GUIDED": 
-            currentLocation = self.vehicle.location.global_relative_frame
-            remainingDistance = get_distance_metres(currentLocation, targetLocation)
-            print ("[mission] Distance to the GPS target: ", remainingDistance)
-            # print("Distance to the GPS target: %.2fm" % d)
-
-            # If the distance to the target verifies the distance accuracy
-            if remainingDistance <= distanceAccuracy:
-                print("[mission] Reached GPS target!")
-                break  # Then break the waiting loop
-            sleep(1)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
 # Asservissements
@@ -209,10 +204,6 @@ class Drone:
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
     def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):
-
-        # Si l'aruco n'est pas détecté, on renvoie None on quitte la fonction
-        if aruco_center_x == None:
-            return None, None, None, None
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
@@ -242,21 +233,6 @@ class Drone:
         # Renvoie des valeurs
         return vitesseEst, vitesseNord
 
-    
-
-    def calcul_vitesse_drone(self):
-        vitesseEstX = 0
-        vitesseNordY = 0
-        if self.previousLatitude != 0:
-            groundSpeed = self.vehicle.groundspeed
-            angle = atan2(self.vehicle.location._lat - self.previousLatitude, self.vehicle.location._lon - self.previousLongitude)
-            vitesseEstX = groundSpeed * cos(angle)
-            vitesseNordY = groundSpeed * sin(angle)         
-        self.previousLatitude = self.vehicle.location._lat
-        self.previousLongitude= self.vehicle.location._lon
-        return vitesseEstX, vitesseNordY
-
-
 
     # Fonction prenant en entrée les coordonnées en x et y, en pixels, de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
@@ -264,8 +240,6 @@ class Drone:
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
-            print("Consigne nulle")
-            #self.set_velocity(0, 0, 0)
             return None, None, None, None
 
         # Récupération de l'altitude du drone
@@ -275,38 +249,33 @@ class Drone:
         self.kp_atterrissage *= self.coefficient_kp_atterrissage
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX_2 = self.camera.x_imageCenter - aruco_center_x
-        erreurY_2 = self.camera.y_imageCenter - aruco_center_y + self.offset_camera_atterrissage
+        erreurX = self.camera.x_imageCenter - aruco_center_x
+        erreurY = self.camera.y_imageCenter - aruco_center_y + self.offset_camera_atterrissage
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
-        dist_center = sqrt(erreurX_2**2+erreurY_2**2)
-        dist_angle = atan2(erreurY_2, erreurX_2)
+        dist_center = sqrt(erreurX**2+erreurY**2)
+        dist_angle = atan2(erreurY, erreurX)
         # Rotation de la base pour correspondre au repère du drone
         alpha = dist_angle + self.vehicle.attitude.yaw
-        erreurX = dist_center * cos(alpha)
-        erreurY = dist_center * sin(alpha)
-        # Si l'erreur selon x et y est inférieure à 25 cm, on la considère comme nulle
-        if abs(erreurX) <= 10:  
-            erreurX = 0
-        if abs(erreurY) <= 10:
-            erreurY = 0
+        erreurEst = dist_center * cos(alpha)
+        erreurNord = dist_center * sin(alpha)
 
         # Calcul des erreurs intégrale et dérivée
         # Erreur dérivée 
-        erreurDeriveeX = (erreurX - self.erreurAnterieureX_atterrissage)
-        erreurDeriveeY = (erreurY - self.erreurAnterieureY_atterrissage)
+        erreurDeriveeEst = (erreurEst - self.erreurAnterieureEst_atterrissage)
+        erreurDeriveeNord = (erreurNord - self.erreurAnterieureNord_atterrissage)
         # Erreur intégrale
-        self.erreurIntegraleX_atterrissage += erreurX
-        self.erreurIntegraleY_atterrissage += erreurY
+        self.erreurIntegraleEst_atterrissage += erreurEst
+        self.erreurIntegraleNord_atterrissage += erreurNord
         # Stockage des erreurs en X et Y pour le future calcul de l'erreur dérivée 
-        self.erreurAnterieureX_atterrissage = erreurX
-        self.erreurAnterieureY_atterrissage = erreurY
+        self.erreurAnterieureEst_atterrissage = erreurEst
+        self.erreurAnterieureNord_atterrissage = erreurNord
 
         # Calcul de la vitesse corrigée 
-        vx = self.kp_atterrissage * erreurX + self.kd_atterrissage * erreurDeriveeX + self.ki_atterrissage * self.erreurIntegraleX_atterrissage
-        vy = self.kp_atterrissage * erreurY + self.kd_atterrissage * erreurDeriveeY + self.ki_atterrissage * self.erreurIntegraleY_atterrissage        
+        vEst = self.kp_atterrissage * erreurEst + self.kd_atterrissage * erreurDeriveeEst + self.ki_atterrissage * self.erreurIntegraleEst_atterrissage
+        vNord = self.kp_atterrissage * erreurNord + self.kd_atterrissage * erreurDeriveeNord + self.ki_atterrissage * self.erreurIntegraleNord_atterrissage        
         # Bornage des vitesses à +/- 5 m/s
-        vx = -min(max(vx, -5.0), 5.0)
-        vy = min(max(vy, -5.0), 5.0)
+        vEst = -min(max(vEst, -5.0), 5.0) # Inversion de signe importante mais je sais plus pourquoi
+        vNord = min(max(vNord, -5.0), 5.0)
         
         # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
         dist_center_threshold = 50 if altitude < 2 else 1000        
@@ -326,15 +295,21 @@ class Drone:
                 vz = 0
         
         #Envoie de la consigne de vitesse au drone
-        print("Consigne en vitesse : VX = " + str(vx) + " ; VY = " + str(vy) + " ; VZ = " + str(vz))
-        self.set_velocity(vy, vx, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
-        return erreurX_2, erreurY_2, vx, vy             
+        print("Consigne en vitesse : VEst = " + str(vEst) + " ; VNord = " + str(vNord) + " ; VZ = " + str(vz))
+        self.set_velocity(vNord, vEst, vz)  # Pour le sense de la camera, X controle le 'east' et Y controle le 'North'
+        return erreurX, erreurY, vEst, vNord             
 
         
 #-------------------------------------------------------------------------------------------------------------------------------------------
 # Atterissage Aruco
 # ------------------------------------------------------------------------------------------------------------------------------------------
         
+    # Fonction permettant au drone de réaliser un atterrissage de précision sur un aruco marker
+    # Pour s'assurer de détecter l'aruco marker, on fait descendre le drone à une altitude de 7 mètres
+    # Une fois cette atlitude atteinte, on asservit la position du drone par rapport au centre de l'aruco.
+    # Simultanément à l'asserivessement en position, on fait descendre le drone jusqu'à 1.5 mètre.
+    # Une fois cette atltitude atteinte, il atterrira en passant en "LAND"
+    # Dans le cas où le drone perdrait l'aruco marker, on le force à passer en "LAND" si la manoeuvre d'asservissement a été lancée depuis plus de 30 secondes
     def atterrissage_aruco(self, chemin_dossier):
         
         # Récupération de l'altitude du drone
@@ -374,8 +349,17 @@ class Drone:
         self.set_mode("LAND")
 
 
+#-------------------------------------------------------------------------------------------------------------------------------------------
+# Suivi de vehicule
+# ------------------------------------------------------------------------------------------------------------------------------------------
 
-
+    # Fonction permettant d'accomplir la mission de suivi de véhicule.
+    # Cette fonction prend en paramètre le chemin vers le dossier permettant de stocker les logs
+    # On commence par détecter l'aruco d'ID 700. 
+    # Une fois cet aruco trouvé, on initialise un tracker avec un carré de même centre que celui de l'aruco, ce qui correspond à la voiture à suivre
+    # Une fois le trackeur initialisé, on tracke la voiture pour en trouver son centre. 
+    # On asservit ensuite la vitesse du drone pour que le centre de la caméra et de la voiture coïncident
+    # En plus de cette vitesse, on additionne la vitesse du drone pondérée pour prendre en compte la vitesse de la voiture. 
     def suivi_vehicule(self, chemin_dossier):
 
         # Initialisation des variables du drone
@@ -408,25 +392,37 @@ class Drone:
             # Initialisation des vitesses
             vitesseEst = 0
             vitesseNord = 0
+
                             
             # Si on détecte on calcule la vitesse du drone par rapport au centre de l'objet tracké et à la vitesse du drone
             if ok:
-                # On entoure l'objet tracké sur la photo
-                cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)
-                # Asservissement par rapport au centre de l'objet tracké
-                vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(int(bbox[0]+bbox[2]/2), int(bbox[1]+bbox[3]/2))
+                
+                # Calcul du centre de la voiture en x et en y
+                car_center_x = int(bbox[0]+bbox[2]/2)
+                car_center_y = int(bbox[1]+bbox[3]/2)
+
+                ### Calcul de la vitesse totale
+                # Calcul de la vitesse de la voiture
+                vitesseVoitureEst, vitesseVoitureNord = self.get_car_speed(car_center_x, car_center_y)
                 # Récupération de la vitesse du drone
-                vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
+                #vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
+                # Asservissement par rapport au centre de l'objet tracké
+                vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y)
                 # Ajout et pondération des vitesses
-                vitesseEst = - (vitesseDroneEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0))
-                vitesseNord = vitesseDroneNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
-                # Affichage des vitesses
-                print("Vitesse vNord : " + str(vitesseAsservEst) + " ; vdNord = " + str(vitesseDroneEst) + " ; vy = " + str(vitesseAsservNord) + " ; vdy = " + str(vitesseDroneNord))
+                vitesseEst = - (vitesseVoitureEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseVoitureEst > 0 else 4.0))
+                vitesseNord = vitesseVoitureNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseVoitureNord > 0 else 4.0)
+                
                 # Remise à zéro du compteur de non détection
                 self.compteur_non_detection = 0
                 # Stockage des vitesse
                 self.stored_vEst = vitesseEst
                 self.stored_vNord = vitesseNord
+
+                ### Différents logs
+                # Affichage des vitesses
+                print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseVoitureEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseVoitureNord))
+                # On entoure l'objet tracké sur la photo
+                cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)
 
             # Si on ne détécte pas on adapte la vitesse en fonction du nombre d'images où on ne détecte pas
             else:
@@ -436,7 +432,7 @@ class Drone:
                 if self.compteur_non_detection < 5:
                     vitesseEst = self.stored_vEst
                     vitesseNord = self.stored_vNord
-                # Si le compteur est supérieur à 5, on laisse le vitesse 
+                # Si le compteur est supérieur à 5, on laisse les vitesses nulles
 
 
             #Envoie de la consigne de vitesse au drone
@@ -449,3 +445,59 @@ class Drone:
             cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
             # Sauvegarde de la photo
             enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if ok else "no")
+
+
+    # Fonction permettant de calculer la distance de la voiture grâce à deux prise de photos
+    def get_car_speed(self, car_center_x, car_center_y):
+
+        # Initialisation des vitesses
+        vitesseEst = 0
+        vitesseNord = 0
+        # Si l'on dispose d'une position antérieure pour effectuer le calcul de la position 
+        if self.previousCarPosition != None:
+            # Calcul de la vitesse de la voitrue en calculant la distance entre la position actuelle et précédente de la voiture
+            carSpeed = get_distance_metres(self.currentCarPosition, self.previousCarPosition) / (self.currentMeasuredTime - self.previousMeasuredTime)
+            # Récupération de l'ange entre le 
+            angle = atan2(self.currentCarPosition.lat - self.previousCarPosition.lat, self.currentCarPosition.lon - self.previousCarPosition.lon)
+            # Dissociation de la vitesse de la voiture selon une composante "Nord" et une composante "Est"
+            vitesseEst = carSpeed * cos(angle)
+            vitesseNord = carSpeed * sin(angle)
+        # Renvoi des vitesses
+        return vitesseEst, vitesseNord
+    
+
+    # Fonction permettant calculer la vitesse de la voiture à tracker 
+    def get_car_speed(self, car_center_x, car_center_y):
+        # Récupération des coordonnées de la voiture et du temps actuel
+        self.currentMeasuredTime = time.time()
+        self.currentCarPosition = get_GPS_through_picture(self, car_center_x, car_center_y)
+        # Initialisation des vitesses
+        vitesseVoitureEst = 0
+        vitesseVoitureNord = 0
+        # Si l'on dispose d'une position antérieure pour effectuer le calcul de la position 
+        if self.previousCarPosition != None:
+            # Calcul de la vitesse de la voitrue en calculant la distance entre la position actuelle et précédente de la voiture
+            carSpeed = get_distance_metres(self.currentCarPosition, self.previousCarPosition) / (self.currentMeasuredTime - self.previousMeasuredTime)
+            # Récupération de l'ange entre le 
+            angle = atan2(self.currentCarPosition.lat - self.previousCarPosition.lat, self.currentCarPosition.lon - self.previousCarPosition.lon)
+            # Dissociation de la vitesse de la voiture selon une composante "Nord" et une composante "Est"
+            vitesseVoitureEst = carSpeed * cos(angle)
+            vitesseVoitureNord = carSpeed * sin(angle)
+        # Raffraichissement des valeurs des précédentes coordonnées GPS et de temps
+        self.previousCarPosition = self.currentCarPosition
+        self.previousMeasuredTime = self.currentMeasuredTime
+        # Retour des valeurs de vitesses
+        return vitesseVoitureEst, vitesseVoitureNord
+
+
+    def calcul_vitesse_drone(self):
+        vitesseEst = 0
+        vitesseNord = 0
+        if self.previousLatitude != 0:
+            groundSpeed = self.vehicle.groundspeed
+            angle = atan2(self.vehicle.location._lat - self.previousLatitude, self.vehicle.location._lon - self.previousLongitude)
+            vitesseEst = groundSpeed * cos(angle)
+            vitesseNord = groundSpeed * sin(angle)         
+        self.previousLatitude = self.vehicle.location._lat
+        self.previousLongitude= self.vehicle.location._lon
+        return vitesseEst, vitesseNord

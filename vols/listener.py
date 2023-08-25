@@ -7,8 +7,7 @@ while package_path[-9:] != "IMAV_2023":
     package_path = os.path.dirname(package_path)
 sys.path.insert(0, package_path)
 
-from commande_drone import *
-from time import sleep
+from Drone import *
 
 # Création de l'objet drone
 drone = Drone()
