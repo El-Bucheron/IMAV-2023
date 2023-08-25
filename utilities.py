@@ -50,17 +50,11 @@ def get_GPS_location(aLocation, bearing, distance):
     distance) great circle arc. More informations at:
     https://www.movable-type.co.uk/scripts/latlong.html
     """
-    # Input variables
-    initLat = aLocation.lat
-    initLon = aLocation.lon
-    theta = bearing
-    d = distance
-
     # Inverse of Haversine
-    phi_1 = radians(initLat)
-    lambda_1 = radians(initLon)
-    phi_2 = asin(sin(phi_1) * cos(d/R) + cos(phi_1) * sin(d/R) * cos(theta))
-    lambda_2 = lambda_1 + atan2(sin(theta) * sin(d/R) * cos(phi_1), cos(d/R) - sin(phi_1) * sin(phi_2))
+    phi_1 = radians(aLocation.lat)
+    lambda_1 = radians(aLocation.lon)
+    phi_2 = asin(sin(phi_1) * cos(distance/R) + cos(phi_1) * sin(distance/R) * cos(bearing))
+    lambda_2 = lambda_1 + atan2(sin(bearing) * sin(distance/R) * cos(phi_1), cos(distance/R) - sin(phi_1) * sin(phi_2))
     
     return LocationGlobalRelative(degrees(phi_2), degrees(lambda_2), 0)
 
@@ -85,9 +79,10 @@ def get_distance_angle_picture(x_image_center, y_image_center, x_target_center, 
 
 # Fonction permettant de récupérer les coordonnées GPS d'un objet à partir des coordonnées X,Y d'une image
 def get_GPS_through_picture(drone, X, Y):
-    distance_vision, angle_vision = get_distance_angle_picture(drone.camera.x_imageCenter, drone.camera.y_imageCenter,
-                                                                X, Y,
-                                                                drone.vehicle.rangefinder.distance, drone.camera.dist_coeff_x, drone.camera.dist_coeff_y)
+    distance_vision, angle_vision = get_distance_angle_picture(
+        drone.camera.x_imageCenter, drone.camera.y_imageCenter,
+        X, Y,
+        drone.vehicle.rangefinder.distance, drone.camera.dist_coeff_x, drone.camera.dist_coeff_y)
     current_location = LocationGlobalRelative(drone.vehicle.location.global_frame.lat, drone.vehicle.location.global_frame.lon, 0)
     estimated_location = get_GPS_location(current_location, drone.vehicle.attitude.yaw + angle_vision, distance_vision)
     return estimated_location
@@ -147,14 +142,3 @@ def enregistrement_photo_date_position(drone, image, folder_path, complement_nom
     
     # Écriture de l'image
     cv2.imwrite(os.path.join(folder_path, nom_photo), image)
-
-
-def tracage_nord_est(drone, image):
-    cv2.line(image, 
-            (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
-            (int(-(drone.camera.x_imageCenter+50)*sin(drone.vehicle.attitude.yaw)), int(drone.camera.y_imageCenter*cos(drone.vehicle.attitude.yaw))), 
-            (0, 0, 0), 2)
-    cv2.line(image, 
-            (drone.camera.x_imageCenter, drone.camera.y_imageCenter), 
-            (int(drone.camera.x_imageCenter*(-cos(drone.vehicle.attitude.yaw))), int(-(drone.camera.y_imageCenter-50)*sin(drone.vehicle.attitude.yaw))), 
-            (0, 0, 255), 2)
