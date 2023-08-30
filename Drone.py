@@ -56,9 +56,7 @@ class Drone:
         self.previousLatitude = 0
         self.previousLongitude = 0
         self.previousCarPosition = None
-        self.currentCarPosition = None
         self.previousMeasuredTime = None
-        self.currentMeasuredTime = None
 
         
         # Connexion au drone et initialisation de la caméra
@@ -194,7 +192,7 @@ class Drone:
         # Envoie de la consigne de vitesse au drone 
         self.vehicle.send_mavlink(msg)
         # Temporisation de 0.1 seconde
-        sleep(0.1)
+        #sleep(0.1)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +358,7 @@ class Drone:
     # Une fois le trackeur initialisé, on tracke la voiture pour en trouver son centre. 
     # On asservit ensuite la vitesse du drone pour que le centre de la caméra et de la voiture coïncident
     # En plus de cette vitesse, on additionne la vitesse du drone pondérée pour prendre en compte la vitesse de la voiture. 
-    def suivi_vehicule(self, chemin_dossier):
+    def suivi_vehicule(self, chemin_dossier=""):
 
         # Initialisation des variables du drone
         tracker = cv2.TrackerCSRT_create()
@@ -418,11 +416,8 @@ class Drone:
                 self.stored_vEst = vitesseEst
                 self.stored_vNord = vitesseNord
 
-                ### Différents logs
                 # Affichage des vitesses
                 print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseVoitureEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseVoitureNord))
-                # On entoure l'objet tracké sur la photo
-                cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)
 
             # Si on ne détécte pas on adapte la vitesse en fonction du nombre d'images où on ne détecte pas
             else:
@@ -438,54 +433,42 @@ class Drone:
             #Envoie de la consigne de vitesse au drone
             self.set_velocity(vitesseNord, vitesseEst, 0)
             # Affichage des consignes sur le terminal
-            print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))       
-            # Affichage de la vitesse sur la photo
-            image = cv2.putText(image, "VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
-            # Traçage d'un cercle au centre de l'image
-            cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
-            # Sauvegarde de la photo
-            enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if ok else "no")
+            print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
 
-
-    # Fonction permettant de calculer la distance de la voiture grâce à deux prise de photos
-    def get_car_speed(self, car_center_x, car_center_y):
-
-        # Initialisation des vitesses
-        vitesseEst = 0
-        vitesseNord = 0
-        # Si l'on dispose d'une position antérieure pour effectuer le calcul de la position 
-        if self.previousCarPosition != None:
-            # Calcul de la vitesse de la voitrue en calculant la distance entre la position actuelle et précédente de la voiture
-            carSpeed = get_distance_metres(self.currentCarPosition, self.previousCarPosition) / (self.currentMeasuredTime - self.previousMeasuredTime)
-            # Récupération de l'ange entre le 
-            angle = atan2(self.currentCarPosition.lat - self.previousCarPosition.lat, self.currentCarPosition.lon - self.previousCarPosition.lon)
-            # Dissociation de la vitesse de la voiture selon une composante "Nord" et une composante "Est"
-            vitesseEst = carSpeed * cos(angle)
-            vitesseNord = carSpeed * sin(angle)
-        # Renvoi des vitesses
-        return vitesseEst, vitesseNord
+            if chemin_dossier != "":
+                # On entoure l'objet tracké sur la photo
+                cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)  
+                # Affichage de la vitesse sur la photo
+                image = cv2.putText(image, "VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)              
+                # Traçage d'un cercle au centre de l'image
+                cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                # Sauvegarde de la photo
+                enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if ok else "no")
     
+
+
+
 
     # Fonction permettant calculer la vitesse de la voiture à tracker 
     def get_car_speed(self, car_center_x, car_center_y):
         # Récupération des coordonnées de la voiture et du temps actuel
-        self.currentMeasuredTime = time.time()
-        self.currentCarPosition = get_GPS_through_picture(self, car_center_x, car_center_y)
+        currentMeasuredTime = time.time()
+        currentCarPosition = get_GPS_through_picture(self, car_center_x, car_center_y)
         # Initialisation des vitesses
         vitesseVoitureEst = 0
         vitesseVoitureNord = 0
         # Si l'on dispose d'une position antérieure pour effectuer le calcul de la position 
         if self.previousCarPosition != None:
             # Calcul de la vitesse de la voitrue en calculant la distance entre la position actuelle et précédente de la voiture
-            carSpeed = get_distance_metres(self.currentCarPosition, self.previousCarPosition) / (self.currentMeasuredTime - self.previousMeasuredTime)
+            carSpeed = get_distance_metres(currentCarPosition, self.previousCarPosition) / (currentMeasuredTime - self.previousMeasuredTime)
             # Récupération de l'ange entre le 
-            angle = atan2(self.currentCarPosition.lat - self.previousCarPosition.lat, self.currentCarPosition.lon - self.previousCarPosition.lon)
+            angle = atan2(currentCarPosition.lat - self.previousCarPosition.lat, currentCarPosition.lon - self.previousCarPosition.lon)
             # Dissociation de la vitesse de la voiture selon une composante "Nord" et une composante "Est"
             vitesseVoitureEst = carSpeed * cos(angle)
             vitesseVoitureNord = carSpeed * sin(angle)
         # Raffraichissement des valeurs des précédentes coordonnées GPS et de temps
-        self.previousCarPosition = self.currentCarPosition
-        self.previousMeasuredTime = self.currentMeasuredTime
+        self.previousCarPosition = currentCarPosition
+        self.previousMeasuredTime = currentMeasuredTime
         # Retour des valeurs de vitesses
         return vitesseVoitureEst, vitesseVoitureNord
 
