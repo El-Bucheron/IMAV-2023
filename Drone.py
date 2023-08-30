@@ -127,9 +127,6 @@ class Drone:
 
     # Décollage du drone jusqu'à la distance fournie en argument
     def arm_and_takeoff(self, aTargetAltitude):
-        """
-        Arms vehicle and fly to aTargetAltitude.
-        """
         print("Basic pre-arm checks")
         # Don't let the user try to arm until autopilot is ready
         while not self.vehicle.is_armable:
@@ -150,12 +147,10 @@ class Drone:
 
         # Wait until the vehicle reaches a safe height before processing the goto (otherwise the command 
         #  after Vehicle.simple_takeoff will execute immediately).
-        while True:
-            print(" Altitude: ", self.vehicle.location.global_relative_frame.alt)      
-            if self.vehicle.location.global_relative_frame.alt>=aTargetAltitude*0.95: #Trigger just below target alt.
-                print("Reached target altitude")
-                break
+        while self.vehicle.location.global_relative_frame.alt <aTargetAltitude*0.95:
+            print(" Altitude: ", self.vehicle.location.global_relative_frame.alt)
             sleep(1)
+        print("Reached target altitude")
 
 
     def goto(self, targetLocation, distanceAccuracy):
@@ -164,10 +159,8 @@ class Drone:
 
         # Stop action if we are no longer in GUIDED mode
         while self.vehicle.mode.name == "GUIDED": 
-            currentLocation = self.vehicle.location.global_relative_frame
-            remainingDistance = get_distance_metres(currentLocation, targetLocation)
-            print ("[mission] Distance to the GPS target: ", remainingDistance)
-            # print("Distance to the GPS target: %.2fm" % d)
+            remainingDistance = get_distance_metres(self.vehicle.location.global_relative_frame, targetLocation)
+            print("Distance to the GPS target: %.2fm" % remainingDistance)
 
             # If the distance to the target verifies the distance accuracy
             if remainingDistance <= distanceAccuracy:
@@ -191,8 +184,6 @@ class Drone:
           0, 0)  # yaw, yaw_rate (not used)
         # Envoie de la consigne de vitesse au drone 
         self.vehicle.send_mavlink(msg)
-        # Temporisation de 0.1 seconde
-        #sleep(0.1)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
@@ -201,11 +192,11 @@ class Drone:
 
     # Fonction prenant en entrée les coordonnées en x et y de l'aruco détecté par la cameré 
     # et calcule la vitesse du drone permettant de s'en rapprocher par asservissement PID
-    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y):
+    def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y, altitude):
 
-        # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y + self.offset_camera_suivi_vehicule
+        # Distance en mètre entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
+        erreurX = (self.camera.x_imageCenter - aruco_center_x) * altitude * self.camera.dist_coeff_x
+        erreurY = (self.camera.y_imageCenter - aruco_center_y) * altitude * self.camera.dist_coeff_y + self.offset_camera_suivi_vehicule
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -398,6 +389,7 @@ class Drone:
                 # Calcul du centre de la voiture en x et en y
                 car_center_x = int(bbox[0]+bbox[2]/2)
                 car_center_y = int(bbox[1]+bbox[3]/2)
+                altitude = self.vehicle.rangefinder.distance
 
                 ### Calcul de la vitesse totale
                 # Calcul de la vitesse de la voiture
@@ -405,7 +397,7 @@ class Drone:
                 # Récupération de la vitesse du drone
                 #vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
                 # Asservissement par rapport au centre de l'objet tracké
-                vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y)
+                vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y, altitude)
                 # Ajout et pondération des vitesses
                 vitesseEst = - (vitesseVoitureEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseVoitureEst > 0 else 4.0))
                 vitesseNord = vitesseVoitureNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseVoitureNord > 0 else 4.0)
