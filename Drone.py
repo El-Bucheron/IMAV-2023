@@ -8,7 +8,7 @@ Created on 2022
 
 import cv2
 from time import sleep
-from math import atan2, cos, sin, sqrt
+from math import atan2, cos, sin, sqrt, pi
 from dronekit import connect, VehicleMode
 from pymavlink import mavutil
 from utilities import *
@@ -30,7 +30,6 @@ class Drone:
         self.kd_atterrissage = 0.0002
         self.ki_atterrissage = 0.000001
         self.coefficient_kp_atterrissage = 0.5
-        self.offset_camera_atterrissage = 0
 
         # Initialisation des coefficients pour le calcul des erreurs dérivées et intégrales
         self.erreurIntegraleEst_atterrissage = 0
@@ -42,7 +41,6 @@ class Drone:
         self.kp_suivi_vehicule = 0.0125
         self.kd_suivi_vehicule = 0.000625
         self.ki_suivi_vehicule = 0.000002
-        self.offset_camera_suivi_vehicule = 0
         self.compteur_non_detection = 0
         self.stored_vEst = 0
         self.stored_vNord = 0
@@ -169,7 +167,7 @@ class Drone:
             sleep(1)
                   
    
-    # Définition de la consigne de vitesse selon le repère x,y,z du drone et pendant 0.1 seconde 
+    # Définition de la consigne de vitesse selon le repère x,y,z du drone
     def set_velocity(self, velocity_x, velocity_y, velocity_z):
         # create the SET_POSITION_TARGET_LOCAL_NED command
         msg = self.vehicle.message_factory.set_position_target_local_ned_encode(
@@ -186,6 +184,26 @@ class Drone:
         self.vehicle.send_mavlink(msg)
 
 
+    # Fonction permettant de choisir le yaw du drone
+    def set_yaw(self, heading, relative=False):
+        if relative:
+            is_relative=1 #yaw relative to direction of travel
+        else:
+            is_relative=0 #yaw is an absolute angle
+        # create the CONDITION_YAW command using command_long_encode()
+        msg = self.vehicle.message_factory.command_long_encode(
+            0, 0,    # target system, target component
+            mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
+            0, #confirmation
+            heading,    # param 1, yaw in degrees
+            0,          # param 2, yaw speed deg/s
+            1,          # param 3, direction -1 ccw, 1 cw
+            is_relative, # param 4, relative offset 1, absolute angle 0
+            0, 0, 0)    # param 5 ~ 7 not used
+        # send command to vehicle
+        self.vehicle.send_mavlink(msg)
+
+
 #-------------------------------------------------------------------------------------------------------------------------------------------
 # Asservissements
 # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,13 +214,13 @@ class Drone:
 
         # Distance en mètre entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = (self.camera.x_imageCenter - aruco_center_x) * altitude * self.camera.dist_coeff_x
-        erreurY = (self.camera.y_imageCenter - aruco_center_y) * altitude * self.camera.dist_coeff_y + self.offset_camera_suivi_vehicule
+        erreurY = (self.camera.y_imageCenter - aruco_center_y) * altitude * self.camera.dist_coeff_y
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
         # Rotation de la base pour correspondre au repère du drone
         alpha = dist_angle + self.vehicle.attitude.yaw
-        erreurEst = dist_center * cos(alpha)
+        erreurEst = - dist_center * cos(alpha)
         erreurNord = dist_center * sin(alpha)
 
         # Calcul des erreurs intégrale et dérivée
@@ -239,7 +257,7 @@ class Drone:
 
         # Distance en pixel entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
         erreurX = self.camera.x_imageCenter - aruco_center_x
-        erreurY = self.camera.y_imageCenter - aruco_center_y + self.offset_camera_atterrissage
+        erreurY = self.camera.y_imageCenter - aruco_center_y
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -393,13 +411,13 @@ class Drone:
 
                 ### Calcul de la vitesse totale
                 # Calcul de la vitesse de la voiture
-                vitesseVoitureEst, vitesseVoitureNord = self.get_car_speed(car_center_x, car_center_y)
-                # Récupération de la vitesse du drone
-                #vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
+                vitesseVoitureEst, vitesseVoitureNord, carYaw = self.get_car_speed(car_center_x, car_center_y)
+                # Rotation du drone pour être dans le même sens que la voiture
+                self.set_yaw(degrees(carYaw+pi/2))
                 # Asservissement par rapport au centre de l'objet tracké
                 vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y, altitude)
                 # Ajout et pondération des vitesses
-                vitesseEst = - (vitesseVoitureEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseVoitureEst > 0 else 4.0))
+                vitesseEst = vitesseVoitureEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseVoitureEst > 0 else 4.0)
                 vitesseNord = vitesseVoitureNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseVoitureNord > 0 else 4.0)
                 
                 # Remise à zéro du compteur de non détection
@@ -449,6 +467,7 @@ class Drone:
         # Initialisation des vitesses
         vitesseVoitureEst = 0
         vitesseVoitureNord = 0
+        angle = self.vehicle.attitude.yaw
         # Si l'on dispose d'une position antérieure pour effectuer le calcul de la position 
         if self.previousCarPosition != None:
             # Calcul de la vitesse de la voitrue en calculant la distance entre la position actuelle et précédente de la voiture
@@ -462,7 +481,7 @@ class Drone:
         self.previousCarPosition = currentCarPosition
         self.previousMeasuredTime = currentMeasuredTime
         # Retour des valeurs de vitesses
-        return vitesseVoitureEst, vitesseVoitureNord
+        return vitesseVoitureEst, vitesseVoitureNord, angle
 
 
     def calcul_vitesse_drone(self):
