@@ -26,7 +26,6 @@ def listener(self, name, message):
     if int(message.servo10_raw) == 1350:
         global boolean 
         boolean = False
-    print(boolean)
 
 # On recupère le nom de dossier fourni par l'utilisateur s'il en a fourni un
 # Sinon on utilse la date et l'heure d'appel du code pour le nommer  

@@ -326,7 +326,7 @@ class Drone:
         
         # Tant que le drone n'est pas à 2 m du sol ou que le temps écoulé est inférieur à 30 secondes, 
         # on lance l'asservissement du drone
-        while altitude > 1.5 and (start_time-time.time()) < 30000:
+        while altitude > 1.5 and (time.time()-start_time) < 30:
             
             # Récupération de l'altitude du drone
             altitude = self.vehicle.rangefinder.distance
@@ -340,8 +340,9 @@ class Drone:
             # Si le robot est à moins de 7.5 mètres on détecte directement l'aruco et on récupère les coordonnées de son centre            
             else:  
                 centre_aruco_X, centre_aruco_Y, _, image = self.camera.detection_aruco(True)
+                print("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")
                 # Asservissement par rapport au centre de l'aruco
-                erreurX, erreurY, vx, vy = self.asservissement_atterrissage_fonctionnel(centre_aruco_X, centre_aruco_Y)
+                erreurX, erreurY, vx, vy = self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
                 # Affichage de l'erreur et de la vitesse
                 image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
                 image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
