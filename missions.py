@@ -97,10 +97,13 @@ elif numero_mission == 3:
     altitude = 15
     # Attente du mode stabilize puis du mode auto
     drone.attente_stabilize_auto()
+    # Récupération de la position initiale du drone
+    position_initiale = LocationGlobalRelative(drone.vehicle.location.global_frame.lat, drone.vehicle.location.global_frame.lon, altitude)
     # Décollage
     drone.arm_and_takeoff(altitude)
     #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-    drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
+    #drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
+    drone.goto(LocationGlobalRelative(48.70648, 7.73451, altitude), 0.5)
 
     # Temporisation pour la stabilisation de la position et du drone
     sleep(5)
@@ -110,16 +113,22 @@ elif numero_mission == 3:
     print(nb_mannequins)
 
     # Enregistrement des photos
-    chemin_dossier = creation_dossier_photo("Detection mannequins")
+    chemin_dossier = creation_dossier_photo("Detection mannequins : " + datetime.now().strftime("%d-%m %H:%M:%S"))
     enregistrement_photo_date_position(drone, image, chemin_dossier)
     enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
 
+    # Retour du drone à sa position initiale
+    drone.goto(position_initiale)
+
     # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
+    print("Début de la manoeuvre d'atterissage")
     try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        print("Interruption de programme")
+        drone.atterrissage_aruco(chemin_dossier)
+    except Exception as e:
+        print(e)
+    finally:
+        sys.exit(0) 
+
 
 
 # Asservissement
