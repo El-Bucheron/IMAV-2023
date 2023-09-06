@@ -1,4 +1,12 @@
-from commande_drone import Drone
+# Code permettant d'importer la classe "Drone"
+import os
+import sys
+package_path = os.getcwd()
+while package_path[-9:] != "IMAV_2023":
+    package_path = os.path.dirname(package_path)
+sys.path.insert(0, package_path)
+
+from Drone import Drone
 from dronekit import LocationGlobalRelative
 from pymavlink import mavutil
 import time
@@ -21,6 +29,7 @@ drone_object = Drone()
 #    if line == "exit":
 #        break
 while True:
+  print("Waiting for BRAKE")
   if drone_object.get_mode() == "BRAKE":
     # print("Enter BRAKE mode")
     msg= drone_object.vehicle.message_factory.command_long_encode(
@@ -35,5 +44,5 @@ while True:
     # send command to vehicle
     #for x in range(0,duration) :
     drone_object.vehicle.send_mavlink(msg)
-    # time.sleep(0.1)
+  time.sleep(0.5)
     # drone_object.set_mode("LAND")

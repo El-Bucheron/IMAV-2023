@@ -47,7 +47,7 @@ try:
     # Boucle infinue pour capture les photos en continu
     while True:
         # Si le drone est à plus d'un mètre du sol la photo est prise
-        if(drone.vehicle.rangefinder.distance > 1):
+        if(drone.vehicle.rangefinder.distance > 0):
             # Prise de la photo
             photo = drone.camera.prise_photo()
             # Enregistrement de la photo
