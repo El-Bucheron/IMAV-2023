@@ -446,8 +446,9 @@ class Drone:
             self.set_velocity(vitesseNord, vitesseEst, 0)
             # Affichage des consignes sur le terminal
             print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
+            print(self.vehicle.rangefinder.distance)
 
-            if chemin_dossier != "" and self.vehicle.rangefinder.distance > 5:
+            if chemin_dossier != "" and self.get_mode == "GUIDED":
                 # On entoure l'objet tracké sur la photo
                 cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)  
                 # Affichage de la vitesse sur la photo
