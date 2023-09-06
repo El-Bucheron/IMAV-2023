@@ -419,8 +419,8 @@ class Drone:
                 # Asservissement par rapport au centre de l'objet tracké
                 vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y, altitude)
                 # Ajout et pondération des vitesses
-                vitesseEst = vitesseDroneEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0)
-                vitesseNord = vitesseDroneNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
+                vitesseEst = vitesseDroneEst + vitesseAsservEst #* (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0)
+                vitesseNord = vitesseDroneNord + vitesseAsservNord #* (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
                 
                 # Remise à zéro du compteur de non détection
                 self.compteur_non_detection = 0
@@ -445,7 +445,7 @@ class Drone:
             #Envoie de la consigne de vitesse au drone
             self.set_velocity(vitesseNord, vitesseEst, 0)
             # Affichage des consignes sur le terminal
-            print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
+            #print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
 
             if chemin_dossier != "":
                 # On entoure l'objet tracké sur la photo
