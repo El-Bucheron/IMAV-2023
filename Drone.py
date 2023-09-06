@@ -213,8 +213,8 @@ class Drone:
     def asservissement_suivi_vehicule(self, aruco_center_x, aruco_center_y, altitude):
 
         # Distance en mètre entre le centre de l'aruco trouvé et le centre de la caméra selon les axes x et y de la camera
-        erreurX = (self.camera.x_imageCenter - aruco_center_x) * altitude * self.camera.dist_coeff_x
-        erreurY = (self.camera.y_imageCenter - aruco_center_y) * altitude * self.camera.dist_coeff_y
+        erreurX = (self.camera.x_imageCenter - aruco_center_x) #* altitude * self.camera.dist_coeff_x
+        erreurY = (self.camera.y_imageCenter - aruco_center_y) #* altitude * self.camera.dist_coeff_y
         # Passage en coordonnées cylindriques avec comme origine le centre de la caméra
         dist_center = sqrt(erreurX**2+erreurY**2)
         dist_angle = atan2(erreurY, erreurX)
@@ -281,7 +281,7 @@ class Drone:
         vEst = self.kp_atterrissage * erreurEst + self.kd_atterrissage * erreurDeriveeEst + self.ki_atterrissage * self.erreurIntegraleEst_atterrissage
         vNord = self.kp_atterrissage * erreurNord + self.kd_atterrissage * erreurDeriveeNord + self.ki_atterrissage * self.erreurIntegraleNord_atterrissage        
         # Bornage des vitesses à +/- 5 m/s
-        vEst = -min(max(vEst, -5.0), 5.0) # Inversion de signe importante mais je sais plus pourquoi
+        vEst = -min(max(vEst, -5.0), 5.0) # Inversion de signe pour que ça marche
         vNord = min(max(vNord, -5.0), 5.0)
         
         # Calcul de la distance planaire à partir de laquelle on considère que le drone est au-dessus du drone 
@@ -412,14 +412,15 @@ class Drone:
 
                 ### Calcul de la vitesse totale
                 # Calcul de la vitesse de la voiture
-                vitesseVoitureEst, vitesseVoitureNord, carYaw = self.get_car_speed(car_center_x, car_center_y)
+                #vitesseVoitureEst, vitesseVoitureNord, carYaw = self.get_car_speed(car_center_x, car_center_y)
+                vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
                 # Rotation du drone pour être dans le même sens que la voiture
-                self.set_yaw(degrees(carYaw+pi/2))
+                #self.set_yaw(degrees(carYaw+pi/2))
                 # Asservissement par rapport au centre de l'objet tracké
                 vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y, altitude)
                 # Ajout et pondération des vitesses
-                vitesseEst = vitesseVoitureEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseVoitureEst > 0 else 4.0)
-                vitesseNord = vitesseVoitureNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseVoitureNord > 0 else 4.0)
+                vitesseEst = vitesseDroneEst + vitesseAsservEst * (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0)
+                vitesseNord = vitesseDroneNord + vitesseAsservNord * (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
                 
                 # Remise à zéro du compteur de non détection
                 self.compteur_non_detection = 0
@@ -428,7 +429,7 @@ class Drone:
                 self.stored_vNord = vitesseNord
 
                 # Affichage des vitesses
-                print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseVoitureEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseVoitureNord))
+                print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseDroneEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseDroneNord))
 
             # Si on ne détécte pas on adapte la vitesse en fonction du nombre d'images où on ne détecte pas
             else:
@@ -494,5 +495,5 @@ class Drone:
             vitesseEst = groundSpeed * cos(angle)
             vitesseNord = groundSpeed * sin(angle)         
         self.previousLatitude = self.vehicle.location._lat
-        self.previousLongitude= self.vehicle.location._lon
+        self.previousLongitude = self.vehicle.location._lon
         return vitesseEst, vitesseNord
