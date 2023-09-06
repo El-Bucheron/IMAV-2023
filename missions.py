@@ -32,11 +32,10 @@ def listener(self, name, message):
 # Choix de la mission
 numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
     "1) Cartographie\n" + 
-    "2) L'inspection dynamique\n" + 
-    "3) Identification de l'état des randonneurs\n" +
-    "4) Asservissement sur aruco\n" +
-    "5) Arrêt du programme\n"))
-while numero_mission not in range(1,5):
+    "2) Identification de l'état des randonneurs\n" +
+    "3) Asservissement sur aruco\n" +
+    "4) Arrêt du programme\n"))
+while numero_mission not in range(1,4):
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
 
@@ -79,19 +78,8 @@ if numero_mission == 1:
 
 
 
-# Inspection dynamique
-elif numero_mission == 2:
-    # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        print("Interruption de programme")
-
-
-
 # Identification de l'état des randonneurs
-elif numero_mission == 3:
+elif numero_mission == 2:
 
     #Choix de l'altitude de vol : 
     altitude = 15
@@ -132,7 +120,7 @@ elif numero_mission == 3:
 
 
 # Asservissement
-elif numero_mission == 4:
+elif numero_mission == 3:
 
     altitude = 25
     # Attente du mode stabilize puis du mode auto
