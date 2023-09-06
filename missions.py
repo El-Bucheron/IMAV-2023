@@ -91,7 +91,7 @@ elif numero_mission == 2:
     drone.arm_and_takeoff(altitude)
     #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
     #drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
-    drone.goto(LocationGlobalRelative(48.70648, 7.73451, altitude), 0.5)
+    drone.goto(LocationGlobalRelative(48.70652, 7.73549, altitude), 0.5)
 
     # Temporisation pour la stabilisation de la position et du drone
     sleep(5)
@@ -106,7 +106,7 @@ elif numero_mission == 2:
     enregistrement_photo_date_position(drone, result, chemin_dossier, "filtre")
 
     # Retour du drone à sa position initiale
-    drone.goto(position_initiale)
+    drone.goto(position_initiale,0.25)
 
     # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
     print("Début de la manoeuvre d'atterissage")
