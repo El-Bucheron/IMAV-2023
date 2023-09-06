@@ -373,7 +373,7 @@ class Drone:
         # Initialisation des variables du drone
         tracker = cv2.TrackerCSRT_create()
         bbox = (0,0,0,0)
-        taille_carré = 100
+        taille_carré = 75
         
         # Bouche infinie servant à chercher l'aruco pour initialiser le tracker
         while True:
@@ -413,14 +413,14 @@ class Drone:
                 ### Calcul de la vitesse totale
                 # Calcul de la vitesse de la voiture
                 #vitesseVoitureEst, vitesseVoitureNord, carYaw = self.get_car_speed(car_center_x, car_center_y)
-                vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
+                #vitesseDroneEst, vitesseDroneNord = self.calcul_vitesse_drone()
                 # Rotation du drone pour être dans le même sens que la voiture
                 #self.set_yaw(degrees(carYaw+pi/2))
                 # Asservissement par rapport au centre de l'objet tracké
                 vitesseAsservEst, vitesseAsservNord = self.asservissement_suivi_vehicule(car_center_x, car_center_y, altitude)
                 # Ajout et pondération des vitesses
-                vitesseEst = vitesseDroneEst + vitesseAsservEst #* (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0)
-                vitesseNord = vitesseDroneNord + vitesseAsservNord #* (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
+                vitesseEst = vitesseAsservEst #+ vitesseDroneEst #* (1.0 if vitesseAsservEst*vitesseDroneEst > 0 else 4.0)
+                vitesseNord = vitesseAsservNord #+ vitesseDroneNord #* (1.0 if vitesseAsservNord*vitesseDroneNord > 0 else 4.0)
                 
                 # Remise à zéro du compteur de non détection
                 self.compteur_non_detection = 0
@@ -429,7 +429,7 @@ class Drone:
                 self.stored_vNord = vitesseNord
 
                 # Affichage des vitesses
-                print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseDroneEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseDroneNord))
+                #print("Vitesse vEst : " + str(vitesseAsservEst) + " ; vvEst = " + str(vitesseDroneEst) + " ; vNord = " + str(vitesseAsservNord) + " ; vvNord = " + str(vitesseDroneNord))
 
             # Si on ne détécte pas on adapte la vitesse en fonction du nombre d'images où on ne détecte pas
             else:
@@ -445,9 +445,9 @@ class Drone:
             #Envoie de la consigne de vitesse au drone
             self.set_velocity(vitesseNord, vitesseEst, 0)
             # Affichage des consignes sur le terminal
-            #print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
+            print("Consigne en vitesse : VEst = " + str(vitesseEst) + " ; VNord = " + str(vitesseNord))     
 
-            if chemin_dossier != "":
+            if chemin_dossier != "" and self.vehicle.rangefinder.distance > 5:
                 # On entoure l'objet tracké sur la photo
                 cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])), (0, 0, 255), 2, 2)  
                 # Affichage de la vitesse sur la photo
