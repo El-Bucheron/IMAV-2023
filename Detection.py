@@ -8,6 +8,7 @@ import os
 import numpy as np
 import cv2
 import cv2.aruco as aruco
+import math
 import sys
 from picamera import PiCamera
 from utilities import *
@@ -279,7 +280,69 @@ class Detection:
             return (None, None, None, image) if return_image == True else (None, None, None)
 
 
-
+    def calcul_radian_aruco(self,  return_image = True):
+        #Vérification que la matrice générée est une matrice de rotation
+        def isRotationMatrix(R) : 
+        	Rt=np.transpose(R)
+        	shouldBeIdentity = np.dot(Rt,R)
+        	I = np.identity(3, dtype = R.dtype)
+        	n = np.linalg.norm(I - shouldBeIdentity)
+        	return n < 1e-6
+        
+        #Conversion de la matrice de rotation pour en déduire les angles d'Euler
+        def rotationMatrixToEulerAngles(R) :
+        	assert(isRotationMatrix(R))
+        	sy = math.sqrt(R[0,0] * R[0,0] + R[1,0] * R[1,0])
+        	singular = sy <1e-6
+        	if not singular :
+        		x=math.atan2(R[2,1] ,R[2,2])
+        		y = math.atan2(-R[2,0], sy)
+        		z = math.atan2(R[1,0], R[0,0])
+        	else :
+        		x = math.atan2(-R[1,2], R[1,1])
+        		y = math.atan2(-R[2,0], sy)
+        		z = 0
+        	return np.array([x, y, z])
+         
+        #Je mettrai ce bordel dans une sous-fonction plus tard
+        #Modifications pour tester la détection de l'orientation de l'ArUco via quelques transformations   
+        #STEP1: faut chercher les matrices de calibrations et de distortion     
+        dist_coef = self.camera_distortion
+        cam_mat = self.matrice_camera_corrigee
+        MARKER_SIZE = 19.9  # centimeters
+        marker_dict = self.aruco_dict
+        param_markers = self.parameters
+        
+        #STEP2: il faut une image à travailler        
+        image = self.prise_photo()
+        
+        #STEP3: detection de l'aruco et prise de ses coordonnées
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) #nuances de gris de l'image
+        marker_corners, marker_IDs, reject = aruco.detectMarkers(gray_image, marker_dict, parameters=param_markers)#détection des maruqueurs sur l'image (ID + coordonées en pixels de           leurs coins)
+        if marker_corners:
+            rVec, tVec, _ = aruco.estimatePoseSingleMarkers(
+                marker_corners, MARKER_SIZE, cam_mat, dist_coef
+            ) #extraction des matrices de translation tVec et de rotation rVec
+            
+            R , _=cv2.Rodrigues(rVec)#transformation de Rodrigues-Euler
+            _,_,z = rotationMatrixToEulerAngles(R)#extraction des angles d'Euler de la matrice de rotation
+            total_markers = range(0, marker_IDs.size)
+            for ids, corners, i in zip(marker_IDs, marker_corners, total_markers):
+                cv2.polylines(
+                    image, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA
+                )
+                corners = corners.reshape(4, 2)
+                corners = corners.astype(int)
+                top_right = corners[0].ravel()
+                top_left = corners[1].ravel()
+                bottom_right = corners[2].ravel()
+                bottom_left = corners[3].ravel()
+                
+                # Draw the pose of the marker
+                point = cv2.drawFrameAxes(image, cam_mat, dist_coef, rVec[i], tVec[i], 4, 4)
+                print("AruCo a un angle de " + str(float(z))+" radians")
+        
+        return z,image
 
     def detection_carre_bleu(self):
 

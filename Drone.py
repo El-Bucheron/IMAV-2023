@@ -7,6 +7,9 @@ Created on 2022
 """
 
 import cv2
+from cv2 import aruco as aruco
+import numpy as np
+import math
 from time import sleep
 from math import atan2, cos, sin, sqrt, pi
 from dronekit import connect, VehicleMode
@@ -373,22 +376,26 @@ class Drone:
         # Initialisation des variables du drone
         tracker = cv2.TrackerCSRT_create()
         bbox = (0,0,0,0)
-        taille_carré = 75
+        taille_carré = 199
         
-        # Bouche infinie servant à chercher l'aruco pour initialiser le tracker
+        # Boucle infinie servant à chercher l'aruco pour initialiser le tracker
         while True:
             # Détection de l'aruco
             aruco_center_x, aruco_center_y, id, image = self.camera.detection_aruco(True)
             # Si un aruco a été détecté et que son ID est 700, on intialise le tracker grace au centre trouvé et on sort de la bouche
-            if aruco_center_x != None and id == 700:
+            if aruco_center_x != None: #and id == 700: #WATCH OUT DESACTIVATION VERIF ID ARUCO!!!
                 # Détermination de la zone d'intérêt : un carré de même centre que celui de l'aruco et de côté "taille_carré"
                 bbox = (aruco_center_x-int(taille_carré/2),aruco_center_y-int(taille_carré/2), taille_carré, taille_carré)
                 # Initialisation du tracker
                 tracker.init(image, bbox)
                 # Sortie de boucle
                 break
-    
         print("Aruco détecté")
+        
+        z,image=self.camera.calcul_radian_aruco(self)
+        #Final step : enregistrement photo
+        enregistrement_photo_date_position(self, image, chemin_dossier)
+        self.setyaw(degrees(-z))
 
         # Boucle infinie asservisement le drone par rapport au centre de l'objet tracké
         while True:
@@ -457,7 +464,7 @@ class Drone:
                 cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
                 # Sauvegarde de la photo
                 enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if ok else "no")
-    
+       
 
 
 

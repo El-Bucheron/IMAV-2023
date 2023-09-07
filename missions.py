@@ -128,8 +128,8 @@ elif numero_mission == 3:
     # Décollage
     drone.arm_and_takeoff(altitude)
     #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-    #drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
-    drone.goto(LocationGlobalRelative(48.7066603, 7.7341269, altitude), 0.5)
+    drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
+    #drone.goto(LocationGlobalRelative(48.7066603, 7.7341269, altitude), 0.5)
     # Création du dossier recevant les photos
     chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
     # Initialisation du suivi de véhicule
