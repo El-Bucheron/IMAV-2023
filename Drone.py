@@ -250,6 +250,7 @@ class Drone:
 
         # Si l'aruco n'est pas détecté, on l'affiche et on quitte la fonction
         if aruco_center_x == None:
+            self.set_velocity(0, 0, 0.2) #sens z positif -> vers le sol
             return None, None, None, None
 
         # Récupération de l'altitude du drone
