@@ -377,7 +377,7 @@ class Drone:
         # Initialisation des variables du drone
         tracker = cv2.TrackerCSRT_create()
         bbox = (0,0,0,0)
-        taille_carré = 199
+        taille_carré = 75
         
         # Boucle infinie servant à chercher l'aruco pour initialiser le tracker
         while True:

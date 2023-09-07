@@ -309,7 +309,7 @@ class Detection:
         #STEP1: faut chercher les matrices de calibrations et de distortion     
         dist_coef = self.camera_distortion
         cam_mat = self.matrice_camera_corrigee
-        MARKER_SIZE = 19.9  # centimeters
+        MARKER_SIZE = 100  # centimeters
         marker_dict = self.aruco_dict
         param_markers = self.parameters
         
@@ -327,6 +327,7 @@ class Detection:
             R , _=cv2.Rodrigues(rVec)#transformation de Rodrigues-Euler
             _,_,z = rotationMatrixToEulerAngles(R)#extraction des angles d'Euler de la matrice de rotation
             total_markers = range(0, marker_IDs.size)
+            #Step4: t'inquiètes pas ça va bien se passer
             for ids, corners, i in zip(marker_IDs, marker_corners, total_markers):
                 cv2.polylines(
                     image, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA
