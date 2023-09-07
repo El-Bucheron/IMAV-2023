@@ -384,7 +384,7 @@ class Drone:
             # Détection de l'aruco
             aruco_center_x, aruco_center_y, id, image = self.camera.detection_aruco(True)
             # Si un aruco a été détecté et que son ID est 700, on intialise le tracker grace au centre trouvé et on sort de la bouche
-            if aruco_center_x != None: #and id == 700: #WATCH OUT DESACTIVATION VERIF ID ARUCO!!!
+            if aruco_center_x != None and id == 700: #WATCH OUT DESACTIVATION VERIF ID ARUCO!!!
                 # Détermination de la zone d'intérêt : un carré de même centre que celui de l'aruco et de côté "taille_carré"
                 bbox = (aruco_center_x-int(taille_carré/2),aruco_center_y-int(taille_carré/2), taille_carré, taille_carré)
                 # Initialisation du tracker
@@ -397,6 +397,7 @@ class Drone:
         #Final step : enregistrement photo
         enregistrement_photo_date_position(self, image, chemin_dossier)
         self.setyaw(degrees(-z))
+        sleep(5)
 
         # Boucle infinie asservisement le drone par rapport au centre de l'objet tracké
         while True:
