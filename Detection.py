@@ -311,9 +311,9 @@ class Detection:
             # Ignorer les petits contours qui pourraient être du bruit
             if w > 10 and h > 10:
                 # Dessiner un rectangle autour de la forme détectée (dans ce cas, le carré bleu)
-                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # mise en commentaire pour eviter d avoir le rectangle sur les images pour ne pas fausser la carto
                 # Mettre le nom de la forme au centre du rectangle
-                cv2.putText(image, 'Carre Bleu', (x + int(w/2) - 50, y + int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                # cv2.putText(image, 'Carre Bleu', (x + int(w/2) - 50, y + int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 return True, image
 
         return False, image
