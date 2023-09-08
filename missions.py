@@ -6,7 +6,7 @@ from Drone import *
 # See https://stackoverflow.com/a/57008707
 class Logger(object):
     def __init__(self, filename):
-        self.file = open(filename, 'w')
+        self.file = open(os.path.join("logger_output",filename), 'w')
         self.stdout = sys.stdout
 
     def __enter__(self):
@@ -162,4 +162,5 @@ elif numero_mission == 3:
 
 # Arrêt du programme
 elif numero_mission == 4:
+    drone.vehicle.play_tune("AAAA")
     sys.exit(0)
