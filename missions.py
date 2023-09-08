@@ -59,7 +59,7 @@ numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
     "2) Identification de l'état des randonneurs\n" +
     "3) Asservissement sur aruco\n" +
     "4) Arrêt du programme\n"))
-while numero_mission not in range(1,4):
+while numero_mission not in range(1,5):
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
 
