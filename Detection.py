@@ -283,26 +283,26 @@ class Detection:
     def calcul_radian_aruco(self,  return_image = True):
         #Vérification que la matrice générée est une matrice de rotation
         def isRotationMatrix(R) : 
-        	Rt=np.transpose(R)
-        	shouldBeIdentity = np.dot(Rt,R)
-        	I = np.identity(3, dtype = R.dtype)
-        	n = np.linalg.norm(I - shouldBeIdentity)
-        	return n < 1e-6
-        
+            Rt=np.transpose(R)
+            shouldBeIdentity = np.dot(Rt,R)
+            I = np.identity(3, dtype = R.dtype)
+            n = np.linalg.norm(I - shouldBeIdentity)
+            return n < 1e-6
+
         #Conversion de la matrice de rotation pour en déduire les angles d'Euler
         def rotationMatrixToEulerAngles(R) :
-        	assert(isRotationMatrix(R))
-        	sy = math.sqrt(R[0,0] * R[0,0] + R[1,0] * R[1,0])
-        	singular = sy <1e-6
-        	if not singular :
-        		x=math.atan2(R[2,1] ,R[2,2])
-        		y = math.atan2(-R[2,0], sy)
-        		z = math.atan2(R[1,0], R[0,0])
-        	else :
-        		x = math.atan2(-R[1,2], R[1,1])
-        		y = math.atan2(-R[2,0], sy)
-        		z = 0
-        	return np.array([x, y, z])
+            assert(isRotationMatrix(R))
+            sy = math.sqrt(R[0,0] * R[0,0] + R[1,0] * R[1,0])
+            singular = sy <1e-6
+            if not singular :
+                x=math.atan2(R[2,1] ,R[2,2])
+                y = math.atan2(-R[2,0], sy)
+                z = math.atan2(R[1,0], R[0,0])
+            else :
+                x = math.atan2(-R[1,2], R[1,1])
+                y = math.atan2(-R[2,0], sy)
+                z = 0
+            return np.array([x, y, z])
          
         #Je mettrai ce bordel dans une sous-fonction plus tard
         #Modifications pour tester la détection de l'orientation de l'ArUco via quelques transformations   
