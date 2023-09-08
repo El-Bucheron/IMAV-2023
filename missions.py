@@ -162,5 +162,7 @@ elif numero_mission == 3:
 
 # Arrêt du programme
 elif numero_mission == 4:
-    drone.vehicle.play_tune("AAAA")
+    #msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("FEFGAA#A"))
+    msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+    drone.vehicle.send_mavlink(msg)
     sys.exit(0)
