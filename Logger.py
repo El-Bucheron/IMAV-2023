@@ -3,7 +3,7 @@ import os, sys, traceback
 # See https://stackoverflow.com/a/57008707
 class Logger(object):
     def __init__(self, filename):
-        # Si le dossier "photos" n'existe pas on le crée
+        # Si le dossier "logger_output" n'existe pas on le crée
         if "logger_output" not in os.listdir(os.getcwd()):
             os.mkdir(os.path.join(os.getcwd(), "logger_output"))
         self.file = open(os.path.join("logger_output",filename), 'w')
