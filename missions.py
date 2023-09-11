@@ -23,7 +23,7 @@ def listener(self, name, message):
         # Atterrissage
         print("Début de la manoeuvre d'atterissage")
         try:
-            drone.atterrissage_aruco(chemin_atterrissage)
+            drone.atterrissage_aruco()
         except Exception as e:
             print(e)
         finally:
@@ -138,21 +138,16 @@ elif numero_mission == 3:
         drone.suivi_vehicule(chemin_dossier)
 
 elif numero_mission == 4:
-    altitude = 25
-    # Attente du mode stabilize puis du mode auto
-    drone.attente_stabilize_auto()
-    # Décollage
-    drone.arm_and_takeoff(altitude)
-    #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-    drone.goto(LocationGlobalRelative(50.910595, 6.227356, 25), 0.5)
-    #drone.goto(LocationGlobalRelative(48.7066603, 7.7341269, altitude), 0.5)
-    # Création du dossier recevant les photos
-    # chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
-    # Initialisation du suivi de véhicule
-    # drone.suivi_vehicule(chemin_dossier)
-
-    while True:
-        pass
+    with Logger("GPS positions : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
+        altitude = 40
+        # Attente du mode stabilize puis du mode auto
+        drone.attente_stabilize_auto()
+        # Décollage
+        drone.arm_and_takeoff(altitude)
+        #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
+        drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)        
+        while True:
+            pass
 
 # Arrêt du programme
 elif numero_mission == 5:

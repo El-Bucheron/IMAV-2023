@@ -321,7 +321,7 @@ class Drone:
     # Simultanément à l'asserivessement en position, on fait descendre le drone jusqu'à 1.5 mètre.
     # Une fois cette atltitude atteinte, il atterrira en passant en "LAND"
     # Dans le cas où le drone perdrait l'aruco marker, on le force à passer en "LAND" si la manoeuvre d'asservissement a été lancée depuis plus de 30 secondes
-    def atterrissage_aruco(self, chemin_dossier):
+    def atterrissage_aruco(self, chemin_dossier=""):
         
         # Récupération de l'altitude du drone
         altitude = self.vehicle.rangefinder.distance
@@ -347,13 +347,14 @@ class Drone:
                 print("Aruco détecté" if centre_aruco_X != None else "Aruco non détecté")
                 # Asservissement par rapport au centre de l'aruco
                 erreurX, erreurY, vx, vy = self.asservissement_atterrissage(centre_aruco_X, centre_aruco_Y)
-                # Affichage de l'erreur et de la vitesse
-                image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-                image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
-                # Traçage d'un cercle au centre de l'image
-                cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
-                # Sauvegarde de la photo
-                enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
+                if chemin_dossier != "":
+                    # Affichage de l'erreur et de la vitesse
+                    image = cv2.putText(image, "Erreur : EX = " + str(erreurX) + " ; EY = " + str(erreurY), (0, 25), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                    image = cv2.putText(image, "Vitesse : Vx = " + str(vx) + " ; Vy = " + str(vy), (0, 50), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
+                    # Traçage d'un cercle au centre de l'image
+                    cv2.circle(image, (self.camera.x_imageCenter, self.camera.y_imageCenter), 4, (0, 255, 0), -1)
+                    # Sauvegarde de la photo
+                    enregistrement_photo_date_position(self, image, chemin_dossier, "yes" if centre_aruco_X != None else "no")
             
             
         # Une fois que le robot est assez bas, on le fait atterrir
