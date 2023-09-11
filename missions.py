@@ -48,7 +48,7 @@ if numero_mission == 1:
         print("Début de la cartographie")
 
         #Création des dossiers de prises de photos
-        chemin_dossier = creation_dossier_photo("Planification dynamique : " + datetime.now().strftime("%d-%m %H:%M:%S"))
+        chemin_dossier = creation_dossier_photo("Mission Cartographie : " + datetime.now().strftime("%d-%m %H:%M:%S"))
         chemin_carto = os.path.join(chemin_dossier, "cartographie")
         chemin_carre_bleu = os.path.join(chemin_dossier, "carre_bleu")
         chemin_atterrissage = os.path.join(chemin_dossier, "atterrisssage")
