@@ -23,7 +23,8 @@ def listener(self, name, message):
         # Atterrissage
         print("Début de la manoeuvre d'atterissage")
         try:
-            drone.atterrissage_aruco()
+            chemin_dossier = creation_dossier_photo("Atterrissage aruco : " + datetime.now().strftime("%d-%m %H:%M:%S"))
+            drone.atterrissage_aruco(chemin_dossier)
         except Exception as e:
             print(e)
         finally:
@@ -92,8 +93,7 @@ elif numero_mission == 2:
         # Décollage
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-        #drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
-        drone.goto(LocationGlobalRelative(48.70652, 7.73549, altitude), 0.5)
+        drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
         
         # Temporisation pour la stabilisation de la position et du drone
         sleep(5)
@@ -131,14 +131,16 @@ elif numero_mission == 3:
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
         drone.goto(LocationGlobalRelative(50.910031, 6.226700, 25), 0.5)
-        #drone.goto(LocationGlobalRelative(48.7066603, 7.7341269, altitude), 0.5)
         # Création du dossier recevant les photos
         chemin_dossier = creation_dossier_photo("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S"))
         # Initialisation du suivi de véhicule
         drone.suivi_vehicule(chemin_dossier)
 
+
+# Planification dynamique
 elif numero_mission == 4:
     with Logger("GPS positions : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
+        
         altitude = 40
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
@@ -152,6 +154,6 @@ elif numero_mission == 4:
 # Arrêt du programme
 elif numero_mission == 5:
     #msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("FEFGAA#A"))
-    msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
-    drone.vehicle.send_mavlink(msg)
+    #msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+    #drone.vehicle.send_mavlink(msg)
     sys.exit(0)
