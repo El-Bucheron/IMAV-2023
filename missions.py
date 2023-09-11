@@ -141,7 +141,7 @@ elif numero_mission == 3:
 elif numero_mission == 4:
     with Logger("GPS positions : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
         
-        altitude = 40
+        altitude = 5
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
         # Décollage
