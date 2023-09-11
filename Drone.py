@@ -8,11 +8,9 @@ Created on 2022
 
 import cv2
 from cv2 import aruco as aruco
-import numpy as np
-import math
 from time import sleep
-from math import atan2, cos, sin, sqrt, pi
-from dronekit import connect, VehicleMode
+from math import atan2, cos, sin, sqrt
+from dronekit import connect, VehicleMode, Command
 from pymavlink import mavutil
 from utilities import *
 from Detection import Detection
@@ -205,6 +203,19 @@ class Drone:
             0, 0, 0)    # param 5 ~ 7 not used
         # send command to vehicle
         self.vehicle.send_mavlink(msg)
+
+
+    def download_mission(self):
+        #Downloads the current mission and returns it in a list.
+        #It is used in save_mission() to get the file information to save.
+        print(" Download mission from vehicle")
+        missionlist=[]
+        cmds = self.vehicle.commands
+        cmds.download()
+        cmds.wait_ready()
+        for cmd in cmds:
+            missionlist.append(cmd)
+        return missionlist
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
