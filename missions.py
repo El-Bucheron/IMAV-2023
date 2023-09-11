@@ -16,8 +16,8 @@ def listener(self, name, message):
     if int(message.servo10_raw) == 1350:
         
         # Passage et attente en mode "GUIDED"    
-        self.set_mode("GUIDED")
-        while self.get_mode() != "GUIDED":
+        drone.set_mode("GUIDED")
+        while drone.get_mode() != "GUIDED":
             pass
 
         # Atterrissage
