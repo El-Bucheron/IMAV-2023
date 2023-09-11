@@ -144,14 +144,50 @@ elif numero_mission == 4:
         altitude = 5
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
+         # Récupération de la position initiale du drone
+        position_initiale = LocationGlobalRelative(drone.vehicle.location.global_frame.lat, drone.vehicle.location.global_frame.lon, altitude)
         # Décollage
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
         #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
         drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
+
+
         print("Attente du passage en mode AUTO")
+        # Création de l'objet permettant de récupérer les drones 
+        cmds = drone.vehicle.commands
+        # Boucle permettant d'attendre que la bonne mission ait été écrite
         while True:
-            pass
+            # Annonce de l'attente de la mission
+            print("Attente de l'écriture de la mission")
+            sleep(1)
+            # Lecture de la mission écrite sur le drone
+            cmds.download()
+            cmds.wait_ready()
+            # Vérification de la condition de sortie de boucle : Consigne "DO_SET_SERVO" sur le channel 10 et de valeur 1750
+            if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750):
+                break
+        # Passage du drone par les différents points de passage
+        for i in range(1,len(cmds)):
+            drone.goto(LocationGlobalRelative[i].x, LocationGlobalRelative[i].y, LocationGlobalRelative[i].z)
+
+        #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
+        #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
+        drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
+
+        # Retour du drone à sa position initiale
+        drone.goto(position_initiale, 0.25)
+        
+        # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
+        print("Début de la manoeuvre d'atterissage")
+        try:
+            chemin_dossier = creation_dossier_photo("Atterrissage aruco : " + datetime.now().strftime("%d-%m %H:%M:%S"))
+            drone.atterrissage_aruco(chemin_dossier)
+        except Exception as e:
+            print(e)
+        finally:
+            sys.exit(0) 
+            
 
 # Arrêt du programme
 elif numero_mission == 5:
