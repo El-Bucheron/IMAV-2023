@@ -141,13 +141,15 @@ elif numero_mission == 3:
 elif numero_mission == 4:
     with Logger("GPS positions : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
         
-        altitude = 40
+        altitude = 5
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
         # Décollage
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-        drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)        
+        #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
+        drone.goto(LocationGlobalRelative(50.8350799642407, 5.97173184156418, altitude), 0.5)  
+        print("Attente du passage en mode AUTO")
         while True:
             pass
 
