@@ -38,7 +38,7 @@ numero_mission = int(input("Quel mission voulez-vous lancer ?\n"+
     "3) Asservissement sur aruco\n" +
     "4) 4 GPS positions\n" +
     "5) Arrêt du programme\n"))
-while numero_mission not in range(1,5):
+while numero_mission not in range(1,6):
     numero_mission = input("Numéro de mission non reconnu. Veuillez resaisir le numéro")
 
 
@@ -148,7 +148,7 @@ elif numero_mission == 4:
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
         #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
-        drone.goto(LocationGlobalRelative(50.8350799642407, 5.97173184156418, altitude), 0.5)  
+        drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
         print("Attente du passage en mode AUTO")
         while True:
             pass
@@ -158,4 +158,7 @@ elif numero_mission == 5:
     #msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("FEFGAA#A"))
     #msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
     #drone.vehicle.send_mavlink(msg)
+    while True:
+      print("Attente atterissageé")
+      sleep(1)
     sys.exit(0)
