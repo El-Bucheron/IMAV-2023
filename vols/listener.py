@@ -16,6 +16,8 @@ drone = Drone()
 @drone.vehicle.on_message('SERVO_OUTPUT_RAW')
 def listener(self, name, message):
     print(message.servo10_raw)
+    if(message.servo10_raw == 1350):
+      drone.set_mode("GUIDED")
 
 # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
 try:
