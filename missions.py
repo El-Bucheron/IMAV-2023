@@ -162,7 +162,6 @@ elif numero_mission == 4:
             # Lecture de la mission écrite sur le drone
             cmds = drone.vehicle.commands
             cmds.download()
-            cmds.wait_ready()
             # Vérification de la condition de sortie de boucle : Consigne "DO_SET_SERVO" sur le channel 10 et de valeur 1750
             if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750):
                 break
