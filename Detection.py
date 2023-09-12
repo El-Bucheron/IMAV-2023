@@ -162,6 +162,8 @@ class Detection:
         # Nombre de mannequins
         nb_mannequins = 0
         distance_min = 100
+        blue_zones_count = 0
+        red_zones_count = 0
 
         #Parmis toutes les formes bleues dÃ©tectÃ©es : 
         for contour in contours_blue:
