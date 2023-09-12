@@ -120,7 +120,7 @@ class Detection:
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # On dÃ©finit la gamme de couleur de bleu que l'on souhaite ( H va de 0 Ã  180 , S et V de 0 Ã  255)
-        lower_blue = np.array([90, 70, 25])
+        lower_blue = np.array([105, 105, 25])
         upper_blue = np.array([150, 255, 255])
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
 

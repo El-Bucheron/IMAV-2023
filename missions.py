@@ -46,7 +46,8 @@ while numero_mission not in range(1,6):
 if numero_mission == 1:
     with Logger("Planification dynamique : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
         print("Début de la cartographie")
-
+        msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+        drone.vehicle.send_mavlink(msg)
         #Création des dossiers de prises de photos
         chemin_dossier = creation_dossier_photo("Mission Cartographie : " + datetime.now().strftime("%d-%m %H:%M:%S"))
         chemin_carto = os.path.join(chemin_dossier, "cartographie")
@@ -83,7 +84,8 @@ if numero_mission == 1:
 # Identification de l'état des randonneurs
 elif numero_mission == 2:
     with Logger("Detection mannequins : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
-
+        msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+        drone.vehicle.send_mavlink(msg)
         #Choix de l'altitude de vol : 
         altitude = 15
         # Attente du mode stabilize puis du mode auto
@@ -123,7 +125,8 @@ elif numero_mission == 2:
 # Asservissement
 elif numero_mission == 3:
     with Logger("Suivi de véhicule : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
-
+        msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+        drone.vehicle.send_mavlink(msg)
         altitude = 25
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
@@ -140,7 +143,8 @@ elif numero_mission == 3:
 # Planification dynamique
 elif numero_mission == 4:
     with Logger("GPS positions : " + datetime.now().strftime("%d-%m %H:%M:%S") + ".txt"):
-        
+        msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+        drone.vehicle.send_mavlink(msg)
         altitude = 5
         # Attente du mode stabilize puis du mode auto
         drone.attente_stabilize_auto()
