@@ -150,7 +150,7 @@ elif numero_mission == 4:
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
         #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
-        drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
+        #drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
 
 
         print("Attente du passage en mode AUTO")
@@ -173,7 +173,7 @@ elif numero_mission == 4:
 
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
         #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
-        drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
+        #drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
 
         # Retour du drone à sa position initiale
         drone.goto(position_initiale, 0.25)
