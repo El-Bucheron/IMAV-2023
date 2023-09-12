@@ -22,7 +22,7 @@ try:
             print(cmds[0])
             print("Condition validée" if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750) else "Condition non validée")
         except:
-            pass
+            print("Mission pas encore chargée")
         sleep(2)
 
 # On arrête l'ascencion du drone avec un Ctrl+C
