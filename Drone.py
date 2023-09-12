@@ -339,7 +339,7 @@ class Drone:
             
             # Si le robot est à plus de 10 mètres du sol on le fait descendre
             if altitude > 7.5:
-                print("Descente du drone ; Altitude : " + str(altitude))
+                print(datetime.now().strftime("%d-%m %H:%M:%S") + " : Descente du drone ; Altitude : " + str(altitude))
                 self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
                 continue
                         
