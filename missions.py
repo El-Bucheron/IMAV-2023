@@ -152,40 +152,12 @@ elif numero_mission == 4:
         #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
         #drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
 
-
-        print("Attente du passage en mode AUTO")
-        # Boucle permettant d'attendre que la bonne mission ait été écrite
-        while True:
-            # Annonce de l'attente de la mission
-            print("Attente de l'écriture de la mission")
+        while drone.get_mode != "AUTO":
+            print("Attente du mode AUTO")
             sleep(1)
-            # Lecture de la mission écrite sur le drone
-            cmds = drone.vehicle.commands
-            cmds.download()
-            cmds.wait_ready()
-            # Vérification de la condition de sortie de boucle : Consigne "DO_SET_SERVO" sur le channel 10 et de valeur 1750
-            if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750):
-                break
-        # Passage du drone par les différents points de passage
-        for i in range(1,len(cmds)):
-            drone.goto(LocationGlobalRelative[i].x, LocationGlobalRelative[i].y, LocationGlobalRelative[i].z)
-
-        #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-        #drone.goto(LocationGlobalRelative(50.910595, 6.227356, altitude), 0.5)      
-        #drone.goto(LocationGlobalRelative(50.8349995, 5.9720175, altitude), 0.5)  
-
-        # Retour du drone à sa position initiale
-        drone.goto(position_initiale, 0.25)
-        
-        # Boucle d'attente de la commande "SERVO_OUTPUT_RAW" pour l'atterissage sur l'aruco
-        print("Début de la manoeuvre d'atterissage")
-        try:
-            chemin_dossier = creation_dossier_photo("Atterrissage aruco : " + datetime.now().strftime("%d-%m %H:%M:%S"))
-            drone.atterrissage_aruco(chemin_dossier)
-        except Exception as e:
-            print(e)
-        finally:
-            sys.exit(0) 
+        while True:
+            print("Attente de la consigne d'atterrissage")
+            sleep(1)
             
 
 # Arrêt du programme
