@@ -154,14 +154,13 @@ elif numero_mission == 4:
 
 
         print("Attente du passage en mode AUTO")
-        # Création de l'objet permettant de récupérer les drones 
-        cmds = drone.vehicle.commands
         # Boucle permettant d'attendre que la bonne mission ait été écrite
         while True:
             # Annonce de l'attente de la mission
             print("Attente de l'écriture de la mission")
             sleep(1)
             # Lecture de la mission écrite sur le drone
+            cmds = drone.vehicle.commands
             cmds.download()
             cmds.wait_ready()
             # Vérification de la condition de sortie de boucle : Consigne "DO_SET_SERVO" sur le channel 10 et de valeur 1750
