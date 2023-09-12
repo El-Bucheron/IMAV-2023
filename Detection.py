@@ -98,8 +98,6 @@ class Detection:
         image = self.prise_photo()
 
         #Analyse de l'image 
-        taille_min_forme = 0  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille à 0
-
         taille_min_forme_gros = 300  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille Ã  0
         taille_min_forme_petit = 300    
 
@@ -114,12 +112,6 @@ class Detection:
         petite_seuil_max_rouge = 650
         moyenne_seuil_min_rouge = 650
         moyenne_seuil_max_rouge= 1000
-
-        #Mannequin blanc
-        petite_seuil_min_blanc = 0 
-        petite_seuil_max_blanc = 800
-        moyenne_seuil_min_blanc = 800
-        moyenne_seuil_max_blanc = 1200
 
 
         # La variable image représente la vidéo, il est redimensionné avec resize
