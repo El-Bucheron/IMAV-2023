@@ -336,10 +336,11 @@ class Drone:
             
             # Récupération de l'altitude du drone
             altitude = self.vehicle.rangefinder.distance
+            print(datetime.now().strftime("%d-%m %H:%M:%S") + " : Altitude = " + str(altitude))
             
             # Si le robot est à plus de 10 mètres du sol on le fait descendre
             if altitude > 7.5:
-                print(datetime.now().strftime("%d-%m %H:%M:%S") + " : Descente du drone ; Altitude : " + str(altitude))
+                print("Descente du drone")
                 self.set_velocity(0, 0, 1) #sens z positif -> vers le sol
                 continue
                         
