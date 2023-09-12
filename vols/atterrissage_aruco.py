@@ -43,6 +43,8 @@ print("Début de programme")
 # Boucle d'attente de la commande "SERVO_OUTPUT_RAW"
 try:
     while boolean:
+        msg = drone.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+        drone.vehicle.send_mavlink(msg)
         print("En attente de la consigne d'atterrissage")
         sleep(1)
     drone.set_mode("GUIDED")
