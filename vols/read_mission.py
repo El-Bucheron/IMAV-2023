@@ -18,8 +18,11 @@ cmds = drone.vehicle.commands
 try:
     while True:
         cmds.download()
-        print(cmds[0])
-        print("Condition validée" if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750) else "Condition non validée")
+        try:
+            print(cmds[0])
+            print("Condition validée" if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750) else "Condition non validée")
+        except:
+            pass
         sleep(2)
 
 # On arrête l'ascencion du drone avec un Ctrl+C
