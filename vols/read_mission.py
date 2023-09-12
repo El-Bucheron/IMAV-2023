@@ -14,18 +14,20 @@ import dronekit
 
 #Instanciation d'un objet "Drone" pour contrôler le drone 
 drone = Drone()
+cmds = drone.vehicle.commands
 
 try:
-    while True: 
-        try:
-            cmds = drone.vehicle.commands
-            cmds.download()
-            cmds.wait_ready()
-        except dronekit.TimeoutError:
-            print("Erreur timeout")
-            sleep(5)
+    while True:
+        cmds.download()
+        while True:
+            try:
+                print("En attente de téléchargement")
+                cmds.wait_ready()
+                break
+            except dronekit.TimeoutError:
+                print("Erreur timeout")
         print("Condition validée" if (cmds[0].command == 183 and cmds[0].param1 == 10 and cmds[0].param2 == 1750) else "Condition non validée")
-
+        sleep(1)
 
 # On arrête l'ascencion du drone avec un Ctrl+C
 except KeyboardInterrupt:
