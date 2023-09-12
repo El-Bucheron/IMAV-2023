@@ -146,8 +146,8 @@ class Drone:
 
         # Wait until the vehicle reaches a safe height before processing the goto (otherwise the command 
         #  after Vehicle.simple_takeoff will execute immediately).
-        while self.vehicle.location.global_relative_frame.alt <aTargetAltitude*0.95:
-            print(" Altitude: ", self.vehicle.location.global_relative_frame.alt)
+        while self.vehicle.rangefinder.distance <aTargetAltitude*0.95:
+            print(" Altitude: ", self.vehicle.rangefinder.distance)
             sleep(1)
         print("Reached target altitude")
 
