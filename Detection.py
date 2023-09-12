@@ -100,94 +100,115 @@ class Detection:
         #Analyse de l'image 
         taille_min_forme = 0  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille à 0
 
-        # PARAMETRES A 10M
-        if altitude == 10: #if altitude < 11:
-            
-            # Mannequin bleu
-            petite_seuil_min_bleu = 0 
-            petite_seuil_max_bleu = 1500
-            moyenne_seuil_min_bleu = 1500
-            moyenne_seuil_max_bleu = 2000
+        taille_min_forme_gros = 300  # Seuil pour exclure les formes trop petites, dans la pratique , on peut placer cette taille Ã  0
+        taille_min_forme_petit = 300    
 
-            # Mannequin rouge
-            petite_seuil_min_rouge = 0 
-            petite_seuil_max_rouge = 1500
-            moyenne_seuil_min_rouge = 1500
-            moyenne_seuil_max_rouge = 2000
+        #Mannequin bleu 
+        petite_seuil_min_bleu = 0 
+        petite_seuil_max_bleu = 800
+        moyenne_seuil_min_bleu = 800
+        moyenne_seuil_max_bleu = 1200
 
-        # PARAMETRES A 15M    
-        elif altitude == 15: #elif altitude < 16:
+        #Mannequin rouge
+        petite_seuil_min_rouge = 0 
+        petite_seuil_max_rouge = 650
+        moyenne_seuil_min_rouge = 650
+        moyenne_seuil_max_rouge= 1000
 
-            #Mannequin bleu 
-            petite_seuil_min_bleu = 0 
-            petite_seuil_max_bleu = 800
-            moyenne_seuil_min_bleu = 800
-            moyenne_seuil_max_bleu = 1200
+        #Mannequin blanc
+        petite_seuil_min_blanc = 0 
+        petite_seuil_max_blanc = 800
+        moyenne_seuil_min_blanc = 800
+        moyenne_seuil_max_blanc = 1200
 
-            #Mannequin rouge
-            petite_seuil_min_rouge = 0 
-            petite_seuil_max_rouge = 1000
-            moyenne_seuil_min_rouge = 1000
-            moyenne_seuil_max_rouge= 1500
-
-        #PARAMETRES A 20M    
-        elif altitude == 20: #else:
-
-            #Mannequin bleu 
-            petite_seuil_min_bleu = 0 
-            petite_seuil_max_bleu = 450
-            moyenne_seuil_min_bleu = 450
-            moyenne_seuil_max_bleu = 600
-
-            #Mannequin rouge
-            petite_seuil_min_rouge = 0 
-            petite_seuil_max_rouge = 450
-            moyenne_seuil_min_rouge = 450
-            moyenne_seuil_max_rouge = 600
-                
-        else :
-            altitude = 15
-            print("attention, l'altitude a été mise par défaut")
 
         # La variable image représente la vidéo, il est redimensionné avec resize
         image = imutils.resize(image, width=800)
         # Conversion de l'image de l'espace de couleurs BGR (Bleu-Vert-Rouge) à l'espace de couleurs HSV (Teinte-Saturation-Value)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        # On définit la gamme de couleur de bleu que l'on souhaite ( H va de 0 à 180 , S et V de 0 à 255)
-        lower_blue = np.array([105, 105, 25])
-        upper_blue = np.array([150, 255, 255])   
-        # Création d'un masque binaire à partir d'une image HSV pour les zones bleues/rouges
+
+        # On dÃ©finit la gamme de couleur de bleu que l'on souhaite ( H va de 0 Ã  180 , S et V de 0 Ã  255)
+        lower_blue = np.array([90, 70, 25])
+        upper_blue = np.array([150, 255, 255])
         mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
-        mask_red = cv2.inRange(hsv, self.lower_bound_filtre_red, self.upper_bound_filtre_red)
+
+        # On dÃ©finit la gamme de couleur de rouge que l'on souhaite
+        lower_red = np.array([159, 105, 25])
+        upper_red = np.array([180, 255, 255])
+        mask_red = cv2.inRange(hsv, lower_red, upper_red)
+
+        # On dÃ©finit la gamme de couleur de blanc/jaune que l'on souhaite
+        lower_white = np.array([20, 0, 100])
+        upper_white = np.array([35, 20, 255])
+        mask_yellow = cv2.inRange(hsv, lower_white, upper_white)
+
         # Dilater les contours pour fusionner les taches bleues/rouges proches
         dilated_mask_blue = cv2.dilate(mask_blue, None, iterations=3)
         dilated_mask_red = cv2.dilate(mask_red, None, iterations=3)
+        dilated_mask_yellow = cv2.dilate(mask_yellow, None, iterations=3)
+
         # Création d'un masque binaire inverse pour le reste de l'image (masque blanc)
         mask_white = cv2.bitwise_not(cv2.bitwise_or(dilated_mask_blue, dilated_mask_red))
         # On applique le masque binaire bleu/rouge à l'image RGB pour conserver les zones bleues/rouges
         seg_img_blue = cv2.bitwise_and(image, image, mask=dilated_mask_blue)
         seg_img_red = cv2.bitwise_and(image, image, mask=dilated_mask_red)
+        seg_img_yellow = cv2.bitwise_and(image, image, mask=dilated_mask_yellow)
+
         # On crée une image blanche de la même taille que l'image d'origine
         white_img = np.ones_like(image, dtype=np.uint8) * 255
         # On applique le masque binaire inverse à l'image blanche pour avoir le reste en blanc
         seg_img_white = cv2.bitwise_and(white_img, white_img, mask=mask_white)
+
         # On combine les images segmentées bleues et rouges en les additionnant
-        result = cv2.add(seg_img_blue, seg_img_red)
+        result = cv2.add(seg_img_blue, seg_img_red, seg_img_yellow)
         result = cv2.bitwise_or(result, seg_img_white)
         # On cherche le contour des objets bleu et rouge
         contours_blue, _ = cv2.findContours(dilated_mask_blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours_red, _ = cv2.findContours(dilated_mask_red.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours_yellow, _ = cv2.findContours(dilated_mask_yellow.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
         # Nombre de mannequins
         nb_mannequins = 0
+        distance_min = 100
 
+        #Parmis toutes les formes bleues dÃ©tectÃ©es : 
         for contour in contours_blue:
-            x, y, w, h = cv2.boundingRect(contour)
+            x, y, w, h = cv2.boundingRect(contour) #On dÃ©termine ses coordonnÃ©es sur l'image, sa hauteur et sa largeur 
+            area = cv2.contourArea(contour) # On calule l'aire de la forme en pixels
 
-            area = cv2.contourArea(contour)
+            for contour_yellow in contours_yellow:
 
-            # Vérifier si l'aire est supérieure au seuil de taille minimum
-            if area > taille_min_forme:
-                # Catégoriser l'aire en debout, assis et allongé en fonction des seuils de taille
+                area_yellow = cv2.contourArea(contour_yellow) # On calule l'aire de la forme en pixels
+
+                if area_yellow > taille_min_forme_gros :
+
+                    # Calculer la distance entre le centre du contour blanc et le contour bleu
+                    center_yellow = np.mean(contour_yellow, axis=0)[0]
+                    center_blue = np.mean(contour, axis=0)[0]
+                    distance = np.linalg.norm(center_yellow - center_blue)
+
+                    if distance < distance_min:
+                        area = area + area_yellow
+
+            for contour_red in contours_red:    
+
+                area_red = cv2.contourArea(contour_red) # On calule l'aire de la forme en pixels
+
+                if area_red > taille_min_forme_petit :
+
+                    # Calculer la distance entre le centre du contour blanc et le contour bleu
+                    center_red = np.mean(contour_red, axis=0)[0]
+                    center_blue = np.mean(contour, axis=0)[0]
+                    distance = np.linalg.norm(center_red - center_blue)
+
+                    if distance < distance_min:
+                        area = area + area_red
+                        
+            # VÃ©rifier si l'aire est supÃ©rieure au seuil de taille minimum
+            if area > taille_min_forme_gros:
+                
+                
+                # CatÃ©goriser l'aire en debout, assis et allongÃ© en fonction des seuils de taille
                 if petite_seuil_min_bleu < area < petite_seuil_max_bleu:
                     category = 'stand'
                 elif moyenne_seuil_min_bleu < area < moyenne_seuil_max_bleu:
@@ -197,20 +218,21 @@ class Detection:
 
                 # Dessiner le rectangle autour de l'objet bleu
                 cv2.drawContours(result, [contour], 0, (0, 255, 255), 3)
-                # Écrire la catégorie au centre de l'objet bleu
+                # Ã‰crire la catÃ©gorie au centre de l'objet bleu
                 cv2.putText(result, category, (x + int(w / 2), y + int(h / 2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255,0), 2)
 
-                nb_mannequins += 1
+                # IncrÃ©menter le compteur de zones bleues
+                blue_zones_count += 1
 
+        #Parmis toutes les formes rouges dÃ©tectÃ©es : 
         for contour in contours_red:
-            x, y, w, h = cv2.boundingRect(contour)
+            x, y, w, h = cv2.boundingRect(contour) #On dÃ©termine ses coordonnÃ©es sur l'image, sa hauteur et sa largeur 
+            area = cv2.contourArea(contour) # On calcule l'aire de la forme en pixels
 
-            area = cv2.contourArea(contour)
-
-            # Vérifier si l'aire est supérieure au seuil de taille minimum
-            if area > taille_min_forme:
-                # Catégoriser l'aire en debout, assis et allongé en fonction des seuils de taille
+            # VÃ©rifier si l'aire est supÃ©rieure au seuil de taille minimum
+            if area > taille_min_forme_petit:
+                # CatÃ©goriser l'aire en debout, assis et allongÃ© en fonction des seuils de taille
                 if petite_seuil_min_rouge < area < petite_seuil_max_rouge:
                     category = 'stand'
                 elif moyenne_seuil_min_rouge < area < moyenne_seuil_max_rouge:
@@ -220,12 +242,36 @@ class Detection:
 
                 # Dessiner le rectangle autour de l'objet rouge
                 cv2.drawContours(result, [contour], 0, (0, 255, 255), 3)
-                # Écrire la catégorie au centre de l'objet rouge
+                # Ã‰crire la catÃ©gorie au centre de l'objet rouge
                 cv2.putText(result, category, (x + int(w / 2), y + int(h / 2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-                nb_mannequins += 1
+                # IncrÃ©menter le compteur de zones bleues
+                red_zones_count += 1
+                
+        #Parmis toutes les formes blanches/jaunes dÃ©tectÃ©es : 
+        for contour in contours_yellow:
+            x, y, w, h = cv2.boundingRect(contour) #On dÃ©termine ses coordonnÃ©es sur l'image, sa hauteur et sa largeur 
+            area = cv2.contourArea(contour) # On calcule l'aire de la forme en pixels
 
+            # VÃ©rifier si l'aire est supÃ©rieure au seuil de taille minimum
+            if area > taille_min_forme_gros:
+                
+                for contour_blue in contours_blue:
+                    
+                    # Calculer la distance entre le centre du contour blanc et le contour bleu
+                    center_white = np.mean(contour, axis=0)[0]
+                    center_blue = np.mean(contour_blue, axis=0)[0]
+                    distance = np.linalg.norm(center_white - center_blue)
+                    
+                    
+                    if distance < distance_min:
+                        # Dessiner le rectangle autour de l'objet blanc
+                        cv2.drawContours(result, [contour], 0, (0, 255, 255), 3)
+
+        #Calculer le nombre de mannequins
+        nb_mannequins = blue_zones_count + red_zones_count
+        
         # Afficher le nombre de zones bleues identifiées
         cv2.putText(result, f"Mannequins : {nb_mannequins}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
@@ -278,6 +324,8 @@ class Detection:
         # Si l'aruco n'a pas été détecté, on renvoie des variables vides
         else:
             return (None, None, None, image) if return_image == True else (None, None, None)
+
+
 
 
     def calcul_radian_aruco(self,  return_image = True):
@@ -344,6 +392,8 @@ class Detection:
                 print("AruCo a un angle de " + str(float(z))+" radians")
         
         return z,image
+    
+
 
     def detection_carre_bleu(self):
 
