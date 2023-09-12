@@ -99,11 +99,15 @@ class Drone:
         # Attente du mode "STABIIZE"
         while self.get_mode() != "STABILIZE":
             print("En attente du mode STABILIZE")
+            msg = self.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+            self.vehicle.send_mavlink(msg)
             sleep(1)
 
         # Attente du mode "AUTO"
         while self.get_mode() != "AUTO":    
             print("En attente du mode AUTO")
+            msg = self.vehicle.message_factory.play_tune_encode(0, 0, str.encode("A>A>A"))
+            self.vehicle.send_mavlink(msg)
             sleep(1)
 
         # Passage en mode "GUIDED"    
