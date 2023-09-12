@@ -93,7 +93,7 @@ elif numero_mission == 2:
         # Décollage
         drone.arm_and_takeoff(altitude)
         #Vol vers la zone où se trouvent les mannequins (coordonnées de la compète)
-        drone.goto(LocationGlobalRelative(50.909228, 6.226700, altitude), 0.5)
+        drone.goto(LocationGlobalRelative(50.8342711, 5.9727637, altitude), 0.5)
         
         # Temporisation pour la stabilisation de la position et du drone
         sleep(5)
